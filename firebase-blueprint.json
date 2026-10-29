@@ -1,0 +1,467 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil de usuario corporativo o visitante en Peñoles Conecta",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID de Firebase Auth del usuario propietario"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Nombre visible del usuario"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Correo electrónico autenticado con Google"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["USUARIO_ESTANDAR", "EDITOR_CONTENIDO", "RESPONSABLE_TIENDA", "ADMINISTRADOR"],
+          "description": "Rol de control de acceso basado en atributos (RBAC)"
+        },
+        "notificationsEnabled": {
+          "type": "boolean",
+          "description": "Consentimiento para recibir notificaciones push"
+        },
+        "preferredCategories": {
+          "type": "array",
+          "description": "Lista acotada de categorías de interés (máximo 10)"
+        },
+        "language": {
+          "type": "string",
+          "description": "Código de idioma preferido (es-MX)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp del servidor (FieldValue.serverTimestamp())"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de última actualización (FieldValue.serverTimestamp())"
+        }
+      },
+      "required": ["userId", "displayName", "email", "role", "notificationsEnabled", "language", "createdAt", "updatedAt"]
+    },
+    "NewsArticle": {
+      "title": "NewsArticle",
+      "description": "Publicación o comunicado editorial corporativo de Peñoles Conecta",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Titular de la noticia"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Resumen editorial corto"
+        },
+        "content": {
+          "type": "string",
+          "description": "Cuerpo estructurado de la publicación"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Identificador o URL de recurso gráfico autorizado"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Categoría editorial (Sostenibilidad, Innovación, Seguridad, etc.)"
+        },
+        "author": {
+          "type": "string",
+          "description": "Fuente o área institucional autora"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["published", "draft", "archived"],
+          "description": "Estado de publicación en el CMS"
+        },
+        "sourceUrl": {
+          "type": "string",
+          "description": "Enlace de referencia al portal institucional"
+        },
+        "readingTimeMinutes": {
+          "type": "integer",
+          "description": "Tiempo estimado de lectura en minutos"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Etiquetas temáticas (máximo 10)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de creación con FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Fecha de actualización con FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["title", "summary", "content", "imageUrl", "categoryId", "author", "status", "sourceUrl", "readingTimeMinutes", "createdAt", "updatedAt"]
+    },
+    "Banner": {
+      "title": "Banner",
+      "description": "Elemento destacado del carrusel principal administrado desde el backend",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Título superpuesto del banner"
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Descripción breve del banner"
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoría mostrada en la insignia"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Recurso o URL de imagen destacada"
+        },
+        "targetType": {
+          "type": "string",
+          "enum": ["NEWS", "STORE", "ASSISTANT"],
+          "description": "Tipo de destino al abrir el banner"
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Identificador del contenido de destino"
+        },
+        "priority": {
+          "type": "integer",
+          "description": "Orden de prioridad en el carrusel"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indica si el banner está activo"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de creación con FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de actualización con FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["title", "subtitle", "category", "imageUrl", "targetType", "targetId", "priority", "active", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Artículo promocional comercializable o producto industrial de catálogo",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Nombre del artículo o metal/químico industrial"
+        },
+        "description": {
+          "type": "string",
+          "description": "Descripción detallada y aplicaciones"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Categoría dentro de la tienda o catálogo"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Fotografía o recurso visual del producto"
+        },
+        "sku": {
+          "type": "string",
+          "description": "Código SKU institucional"
+        },
+        "price": {
+          "type": "number",
+          "description": "Precio unitario en MXN (0 para productos sujetos a cotización)"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Moneda (MXN)"
+        },
+        "stock": {
+          "type": "integer",
+          "description": "Inventario disponible"
+        },
+        "variants": {
+          "type": "array",
+          "description": "Tallas, presentaciones o variantes (máximo 10)"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Estado de publicación en el catálogo"
+        },
+        "productType": {
+          "type": "string",
+          "enum": ["PROMOTIONAL", "INDUSTRIAL"],
+          "description": "Modalidad comercial del producto"
+        },
+        "technicalSpecs": {
+          "type": "string",
+          "description": "Especificaciones o ficha técnica autorizada"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de creación con FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de actualización con FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["name", "description", "categoryId", "imageUrl", "sku", "price", "currency", "stock", "active", "productType", "technicalSpecs", "createdAt", "updatedAt"]
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "Artículo promocional agregado al carrito de compras del usuario",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID del propietario del carrito"
+        },
+        "productId": {
+          "type": "string",
+          "description": "ID del artículo promocional"
+        },
+        "productName": {
+          "type": "string",
+          "description": "Nombre del artículo al momento de agregarlo"
+        },
+        "variant": {
+          "type": "string",
+          "description": "Talla o variante seleccionada"
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Cantidad solicitada (1 a 99)"
+        },
+        "unitPriceSnapshot": {
+          "type": "number",
+          "description": "Precio unitario en MXN validado"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de creación con FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de actualización con FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "productId", "productName", "variant", "quantity", "unitPriceSnapshot", "createdAt", "updatedAt"]
+    },
+    "FavoriteItem": {
+      "title": "FavoriteItem",
+      "description": "Noticia o producto guardado en favoritos por el usuario",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID del propietario"
+        },
+        "targetId": {
+          "type": "string",
+          "description": "ID de la noticia o producto"
+        },
+        "targetType": {
+          "type": "string",
+          "enum": ["NEWS", "PRODUCT"],
+          "description": "Tipo de elemento guardado"
+        },
+        "title": {
+          "type": "string",
+          "description": "Título de referencia rápida"
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoría del elemento"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de creación con FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de actualización con FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "targetId", "targetType", "title", "category", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Pedido de artículos promocionales con totales validados en el backend",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID del comprador"
+        },
+        "itemsSummary": {
+          "type": "string",
+          "description": "Detalle resumido de partidas y cantidades"
+        },
+        "itemCount": {
+          "type": "integer",
+          "description": "Total de piezas en el pedido"
+        },
+        "subtotal": {
+          "type": "number",
+          "description": "Subtotal en MXN antes de envío"
+        },
+        "shipping": {
+          "type": "number",
+          "description": "Costo de envío en MXN"
+        },
+        "total": {
+          "type": "number",
+          "description": "Importe total validado (subtotal + shipping)"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Moneda (MXN)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["CONFIRMADO_DEMO", "EN_PREPARACION", "ENVIADO", "ENTREGADO", "CANCELADO"],
+          "description": "Estado del pedido"
+        },
+        "shippingAddress": {
+          "type": "string",
+          "description": "Domicilio de entrega"
+        },
+        "shippingMethod": {
+          "type": "string",
+          "description": "Modalidad de envío seleccionada"
+        },
+        "paymentReference": {
+          "type": "string",
+          "description": "Referencia de checkout demostrativo autorizado"
+        },
+        "isDemoOrder": {
+          "type": "boolean",
+          "description": "Bandera obligatoria que identifica una orden en modo demostración"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de creación con FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de actualización con FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "itemsSummary", "itemCount", "subtotal", "shipping", "total", "currency", "status", "shippingAddress", "shippingMethod", "paymentReference", "isDemoOrder", "createdAt", "updatedAt"]
+    },
+    "QuoteRequest": {
+      "title": "QuoteRequest",
+      "description": "Solicitud de cotización informativa para el catálogo de productos industriales",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID del solicitante"
+        },
+        "productId": {
+          "type": "string",
+          "description": "ID del metal o producto químico industrial"
+        },
+        "productName": {
+          "type": "string",
+          "description": "Nombre del producto industrial"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Razón social o empresa solicitante"
+        },
+        "contactEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Correo de contacto empresarial"
+        },
+        "contactPhone": {
+          "type": "string",
+          "description": "Teléfono de contacto"
+        },
+        "estimatedVolume": {
+          "type": "string",
+          "description": "Volumen o tonelaje estimado requerido"
+        },
+        "applicationNotes": {
+          "type": "string",
+          "description": "Uso industrial o especificaciones requeridas"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDIENTE", "EN_REVISION", "COTIZADA", "CERRADA"],
+          "description": "Estado de seguimiento comercial"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de creación con FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de actualización con FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "productId", "productName", "companyName", "contactEmail", "contactPhone", "estimatedVolume", "applicationNotes", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Perfiles de usuario aislados por propietario y administrables por rol"
+    },
+    "/news_articles/{articleId}": {
+      "schema": { "$ref": "#/entities/NewsArticle" },
+      "description": " Artículos y comunicados corporativos publicados en Peñoles Conecta"
+    },
+    "/banners/{bannerId}": {
+      "schema": { "$ref": "#/entities/Banner" },
+      "description": "Banners destacados del carrusel principal"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Catálogo de artículos promocionales y productos industriales"
+    },
+    "/users/{userId}/cart_items/{itemId}": {
+      "schema": { "$ref": "#/entities/CartItem" },
+      "description": "Partidas del carrito de artículos promocionales por usuario"
+    },
+    "/users/{userId}/favorites/{favoriteId}": {
+      "schema": { "$ref": "#/entities/FavoriteItem" },
+      "description": "Noticias y productos guardados en favoritos por usuario"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Pedidos de artículos promocionales con validación de importes"
+    },
+    "/quote_requests/{quoteId}": {
+      "schema": { "$ref": "#/entities/QuoteRequest" },
+      "description": "Solicitudes de cotización comercial para productos industriales"
+    }
+  }
+}

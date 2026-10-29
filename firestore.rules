@@ -1,0 +1,376 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Safe for allow list (Zero DB reads)
+    function isBootstrappedAdmin() {
+      return isSignedIn() &&
+             'email' in request.auth.token &&
+             'email_verified' in request.auth.token &&
+             request.auth.token.email == 'aldo.jael123@gmail.com' &&
+             request.auth.token.email_verified == true;
+    }
+
+    // Full Admin check for single-document operations
+    function isAdmin() {
+      return isBootstrappedAdmin() ||
+             (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap)
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+             data.role is string && data.role in ['USUARIO_ESTANDAR', 'EDITOR_CONTENIDO', 'RESPONSABLE_TIENDA', 'ADMINISTRADOR'] &&
+             data.notificationsEnabled is bool &&
+             data.language is string && data.language.size() >= 2 && data.language.size() <= 10 &&
+             (!('preferredCategories' in data) || (
+               data.preferredCategories is list &&
+               data.preferredCategories.size() <= 10 &&
+               (data.preferredCategories.size() == 0 || (data.preferredCategories[0] is string && data.preferredCategories[0].size() <= 60))
+             )) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidNewsArticle(data) {
+      return data.title is string && data.title.size() >= 3 && data.title.size() <= 200 &&
+             data.summary is string && data.summary.size() >= 3 && data.summary.size() <= 600 &&
+             data.content is string && data.content.size() >= 10 && data.content.size() <= 15000 &&
+             data.imageUrl is string && data.imageUrl.size() <= 500 &&
+             data.categoryId is string && data.categoryId.size() >= 1 && data.categoryId.size() <= 60 &&
+             data.author is string && data.author.size() >= 1 && data.author.size() <= 120 &&
+             data.status is string && data.status in ['published', 'draft', 'archived'] &&
+             data.sourceUrl is string && data.sourceUrl.size() <= 500 &&
+             data.readingTimeMinutes is int && data.readingTimeMinutes >= 1 && data.readingTimeMinutes <= 60 &&
+             (!('tags' in data) || (
+               data.tags is list &&
+               data.tags.size() <= 10 &&
+               (data.tags.size() == 0 || (data.tags[0] is string && data.tags[0].size() <= 50))
+             )) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidBanner(data) {
+      return data.title is string && data.title.size() >= 3 && data.title.size() <= 150 &&
+             data.subtitle is string && data.subtitle.size() >= 1 && data.subtitle.size() <= 250 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.imageUrl is string && data.imageUrl.size() <= 500 &&
+             data.targetType is string && data.targetType in ['NEWS', 'STORE', 'ASSISTANT'] &&
+             data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+             data.priority is int && data.priority >= 0 && data.priority <= 100 &&
+             data.active is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() >= 2 && data.name.size() <= 150 &&
+             data.description is string && data.description.size() >= 5 && data.description.size() <= 2000 &&
+             data.categoryId is string && data.categoryId.size() >= 1 && data.categoryId.size() <= 60 &&
+             data.imageUrl is string && data.imageUrl.size() <= 500 &&
+             data.sku is string && data.sku.size() >= 2 && data.sku.size() <= 64 &&
+             (data.price is int || data.price is float) && data.price >= 0 && data.price <= 500000 &&
+             data.currency is string && data.currency == 'MXN' &&
+             data.stock is int && data.stock >= 0 && data.stock <= 100000 &&
+             (!('variants' in data) || (
+               data.variants is list &&
+               data.variants.size() <= 10 &&
+               (data.variants.size() == 0 || (data.variants[0] is string && data.variants[0].size() <= 60))
+             )) &&
+             data.active is bool &&
+             data.productType is string && data.productType in ['PROMOTIONAL', 'INDUSTRIAL'] &&
+             data.technicalSpecs is string && data.technicalSpecs.size() <= 3000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCartItem(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.productId is string && data.productId.size() >= 1 && data.productId.size() <= 128 &&
+             data.productName is string && data.productName.size() >= 1 && data.productName.size() <= 150 &&
+             data.variant is string && data.variant.size() >= 1 && data.variant.size() <= 60 &&
+             data.quantity is int && data.quantity >= 1 && data.quantity <= 99 &&
+             (data.unitPriceSnapshot is int || data.unitPriceSnapshot is float) &&
+             data.unitPriceSnapshot > 0 && data.unitPriceSnapshot <= 500000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidFavoriteItem(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+             data.targetType is string && data.targetType in ['NEWS', 'PRODUCT'] &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidOrder(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.itemsSummary is string && data.itemsSummary.size() >= 2 && data.itemsSummary.size() <= 1000 &&
+             data.itemCount is int && data.itemCount >= 1 && data.itemCount <= 500 &&
+             (data.subtotal is int || data.subtotal is float) && data.subtotal > 0 && data.subtotal <= 1000000 &&
+             (data.shipping is int || data.shipping is float) && data.shipping >= 0 && data.shipping <= 50000 &&
+             (data.total is int || data.total is float) && data.total > 0 && data.total <= 1050000 &&
+             data.total == data.subtotal + data.shipping &&
+             data.currency is string && data.currency == 'MXN' &&
+             data.status is string && data.status in ['CONFIRMADO_DEMO', 'EN_PREPARACION', 'ENVIADO', 'ENTREGADO', 'CANCELADO'] &&
+             data.shippingAddress is string && data.shippingAddress.size() >= 5 && data.shippingAddress.size() <= 400 &&
+             data.shippingMethod is string && data.shippingMethod.size() >= 2 && data.shippingMethod.size() <= 100 &&
+             data.paymentReference is string && data.paymentReference.size() >= 3 && data.paymentReference.size() <= 120 &&
+             data.isDemoOrder is bool && data.isDemoOrder == true &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidQuoteRequest(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.productId is string && data.productId.size() >= 1 && data.productId.size() <= 128 &&
+             data.productName is string && data.productName.size() >= 2 && data.productName.size() <= 150 &&
+             data.companyName is string && data.companyName.size() >= 2 && data.companyName.size() <= 150 &&
+             data.contactEmail is string && data.contactEmail.size() >= 3 && data.contactEmail.size() <= 150 &&
+             data.contactPhone is string && data.contactPhone.size() >= 7 && data.contactPhone.size() <= 30 &&
+             data.estimatedVolume is string && data.estimatedVolume.size() >= 1 && data.estimatedVolume.size() <= 120 &&
+             data.applicationNotes is string && data.applicationNotes.size() >= 3 && data.applicationNotes.size() <= 1000 &&
+             data.status is string && data.status in ['PENDIENTE', 'EN_REVISION', 'COTIZADA', 'CERRADA'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // 4. Collection Match Blocks
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'role', 'notificationsEnabled', 'language', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'role', 'notificationsEnabled', 'preferredCategories', 'language', 'createdAt', 'updatedAt']) &&
+                       isValidUserProfile(incoming()) &&
+                       (incoming().role == 'USUARIO_ESTANDAR' || isAdmin());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().email == existing().email &&
+                       incoming().createdAt == existing().createdAt && (
+                         (request.auth.uid == userId &&
+                          incoming().role == existing().role &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'notificationsEnabled', 'preferredCategories', 'language', 'updatedAt'])) ||
+                         (isAdmin() &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role', 'notificationsEnabled', 'preferredCategories', 'language', 'updatedAt']))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdmin());
+
+      match /cart_items/{itemId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(itemId) && request.auth.uid == userId && (resource == null || existing().userId == request.auth.uid);
+        allow list: if isSignedIn() && request.auth.uid == userId && existing().userId == request.auth.uid;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(itemId) &&
+                         request.auth.uid == userId &&
+                         incoming().keys().hasAll(['userId', 'productId', 'productName', 'variant', 'quantity', 'unitPriceSnapshot', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'productId', 'productName', 'variant', 'quantity', 'unitPriceSnapshot', 'createdAt', 'updatedAt']) &&
+                         isValidCartItem(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(itemId) &&
+                         request.auth.uid == userId &&
+                         isValidCartItem(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().productId == existing().productId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'variant', 'unitPriceSnapshot', 'updatedAt']);
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(itemId) && request.auth.uid == userId;
+      }
+
+      match /favorites/{favoriteId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(favoriteId) && request.auth.uid == userId && (resource == null || existing().userId == request.auth.uid);
+        allow list: if isSignedIn() && request.auth.uid == userId && existing().userId == request.auth.uid;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(favoriteId) &&
+                         request.auth.uid == userId &&
+                         incoming().keys().hasAll(['userId', 'targetId', 'targetType', 'title', 'category', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'targetId', 'targetType', 'title', 'category', 'createdAt', 'updatedAt']) &&
+                         isValidFavoriteItem(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(favoriteId) &&
+                         request.auth.uid == userId &&
+                         isValidFavoriteItem(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().targetId == existing().targetId &&
+                         incoming().targetType == existing().targetType &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'updatedAt']);
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(favoriteId) && request.auth.uid == userId;
+      }
+    }
+
+    match /news_articles/{articleId} {
+      allow get: if isSignedIn() && isValidId(articleId) && (existing().status == 'published' || isAdmin());
+      allow list: if isSignedIn() && (existing().status == 'published' || isBootstrappedAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(articleId) &&
+                       incoming().keys().hasAll(['title', 'summary', 'content', 'imageUrl', 'categoryId', 'author', 'status', 'sourceUrl', 'readingTimeMinutes', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['title', 'summary', 'content', 'imageUrl', 'categoryId', 'author', 'status', 'sourceUrl', 'readingTimeMinutes', 'tags', 'createdAt', 'updatedAt']) &&
+                       isValidNewsArticle(incoming()) &&
+                       isAdmin();
+
+      allow update: if isSignedIn() &&
+                       isValidId(articleId) &&
+                       isValidNewsArticle(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'summary', 'content', 'imageUrl', 'categoryId', 'author', 'status', 'sourceUrl', 'readingTimeMinutes', 'tags', 'updatedAt']) &&
+                       isAdmin();
+
+      allow delete: if isSignedIn() && isValidId(articleId) && isAdmin();
+    }
+
+    match /banners/{bannerId} {
+      allow get: if isSignedIn() && isValidId(bannerId) && (existing().active == true || isAdmin());
+      allow list: if isSignedIn() && (existing().active == true || isBootstrappedAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(bannerId) &&
+                       incoming().keys().hasAll(['title', 'subtitle', 'category', 'imageUrl', 'targetType', 'targetId', 'priority', 'active', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['title', 'subtitle', 'category', 'imageUrl', 'targetType', 'targetId', 'priority', 'active', 'createdAt', 'updatedAt']) &&
+                       isValidBanner(incoming()) &&
+                       isAdmin();
+
+      allow update: if isSignedIn() &&
+                       isValidId(bannerId) &&
+                       isValidBanner(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'subtitle', 'category', 'imageUrl', 'targetType', 'targetId', 'priority', 'active', 'updatedAt']) &&
+                       isAdmin();
+
+      allow delete: if isSignedIn() && isValidId(bannerId) && isAdmin();
+    }
+
+    match /products/{productId} {
+      allow get: if isSignedIn() && isValidId(productId) && (existing().active == true || isAdmin());
+      allow list: if isSignedIn() && (existing().active == true || isBootstrappedAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(productId) &&
+                       incoming().keys().hasAll(['name', 'description', 'categoryId', 'imageUrl', 'sku', 'price', 'currency', 'stock', 'active', 'productType', 'technicalSpecs', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['name', 'description', 'categoryId', 'imageUrl', 'sku', 'price', 'currency', 'stock', 'variants', 'active', 'productType', 'technicalSpecs', 'createdAt', 'updatedAt']) &&
+                       isValidProduct(incoming()) &&
+                       isAdmin();
+
+      allow update: if isSignedIn() &&
+                       isValidId(productId) &&
+                       isValidProduct(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'categoryId', 'imageUrl', 'sku', 'price', 'stock', 'variants', 'active', 'productType', 'technicalSpecs', 'updatedAt']) &&
+                       isAdmin();
+
+      allow delete: if isSignedIn() && isValidId(productId) && isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && isValidId(orderId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(orderId) &&
+                       incoming().keys().hasAll(['userId', 'itemsSummary', 'itemCount', 'subtotal', 'shipping', 'total', 'currency', 'status', 'shippingAddress', 'shippingMethod', 'paymentReference', 'isDemoOrder', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'itemsSummary', 'itemCount', 'subtotal', 'shipping', 'total', 'currency', 'status', 'shippingAddress', 'shippingMethod', 'paymentReference', 'isDemoOrder', 'createdAt', 'updatedAt']) &&
+                       isValidOrder(incoming()) &&
+                       incoming().status == 'CONFIRMADO_DEMO';
+
+      allow update: if isSignedIn() &&
+                       isValidId(orderId) &&
+                       isValidOrder(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().subtotal == existing().subtotal &&
+                       incoming().shipping == existing().shipping &&
+                       incoming().total == existing().total &&
+                       incoming().createdAt == existing().createdAt && (
+                         (existing().userId == request.auth.uid &&
+                          existing().status != 'ENTREGADO' &&
+                          existing().status != 'CANCELADO' &&
+                          incoming().status == 'CANCELADO' &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+                         (isAdmin() &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+                       );
+
+      allow delete: if false;
+    }
+
+    match /quote_requests/{quoteId} {
+      allow get: if isSignedIn() && isValidId(quoteId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(quoteId) &&
+                       incoming().keys().hasAll(['userId', 'productId', 'productName', 'companyName', 'contactEmail', 'contactPhone', 'estimatedVolume', 'applicationNotes', 'status', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'productId', 'productName', 'companyName', 'contactEmail', 'contactPhone', 'estimatedVolume', 'applicationNotes', 'status', 'createdAt', 'updatedAt']) &&
+                       isValidQuoteRequest(incoming()) &&
+                       incoming().status == 'PENDIENTE';
+
+      allow update: if isSignedIn() &&
+                       isValidId(quoteId) &&
+                       isValidQuoteRequest(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().productId == existing().productId &&
+                       incoming().createdAt == existing().createdAt && (
+                         (existing().userId == request.auth.uid &&
+                          existing().status != 'CERRADA' &&
+                          incoming().status == existing().status &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['estimatedVolume', 'applicationNotes', 'updatedAt'])) ||
+                         (isAdmin() &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'estimatedVolume', 'applicationNotes', 'updatedAt']))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(quoteId) && isAdmin();
+    }
+  }
+}

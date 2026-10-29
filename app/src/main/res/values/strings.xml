@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Peñoles Conecta</string>
+    <string name="home_greeting">Descubre lo que sucede en Peñoles</string>
+    <string name="home_explore_store">Explora nuestra tienda</string>
+    <string name="home_assistant_cta">¿Buscas información? Pregunta a nuestro asistente.</string>
+    <string name="search_placeholder">¿Qué estás buscando?</string>
+    <string name="assistant_title">Asistente Peñoles</string>
+    <string name="assistant_welcome">Hola, soy el asistente de información de Peñoles. Puedo ayudarte a encontrar noticias, conocer información corporativa y localizar artículos de la tienda. ¿Qué deseas consultar?</string>
+    <string name="sign_in_with_google">Iniciar sesión con Google</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_news">Noticias</string>
+    <string name="nav_store">Tienda</string>
+    <string name="nav_assistant">Asistente</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="btn_learn_more">Conoce más</string>
+    <string name="btn_view_all">Ver todas</string>
+    <string name="btn_add_to_cart">Agregar al carrito</string>
+    <string name="btn_request_quote">Solicitar cotización</string>
+    <string name="corporate_disclaimer">Entorno demostrativo de Peñoles Conecta. Los recursos, precios y pedidos operan en modo de demostración conectada a la nube.</string>
+</resources>

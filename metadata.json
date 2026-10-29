@@ -1,0 +1,6 @@
+{
+  "name": "Peñoles Conecta",
+  "description": "Plataforma móvil corporativa de Industrias Peñoles para noticias, catálogo comercial e industrial y asistencia inteligente con Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
