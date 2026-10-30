@@ -3,6 +3,7 @@ package com.example.feature.auth
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -22,7 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Person
@@ -72,6 +75,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -87,6 +92,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
+import com.example.feature.common.CorporateBrandIdentityBadge
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
@@ -226,10 +232,10 @@ fun onGoogleSignInClicked(
                 onAuthError("Tipo de credencial inesperado.")
             }
         } catch (e: GetCredentialCancellationException) {
-            Log.w("Auth", "Google Sign-In cancelled or dismissed: ${e.message}", e)
+            Log.w("Auth", "Google Sign-In cancelled or dismissed")
             onAuthCancelled()
         } catch (e: Exception) {
-            Log.e("Auth", "Google Sign-In failed", e)
+            Log.e("Auth", "Google Sign-In failed")
             onAuthError(e.localizedMessage ?: "No fue posible iniciar sesión con Google.")
         }
     }
@@ -246,7 +252,7 @@ fun signOutUser(
         try {
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
         } catch (e: Exception) {
-            Log.e("Auth", "Failed to clear credential state", e)
+            Log.e("Auth", "Failed to clear credential state")
         } finally {
             onSignOutComplete()
         }
@@ -292,29 +298,36 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
+                .imePadding()
         ) {
+            val isNarrow = maxWidth < 360.dp
             val isTabletOrWide = maxWidth >= 680.dp
+            val hPad = when {
+                isTabletOrWide -> 32.dp
+                isNarrow -> 16.dp
+                else -> 20.dp
+            }
 
             if (isTabletOrWide) {
                 // Diseño canónico de 2 columnas para Tablets y pantallas anchas
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 32.dp, vertical = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(28.dp),
+                        .padding(horizontal = hPad, vertical = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(
                         modifier = Modifier
                             .weight(1f)
                             .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         LoginHeroBanner(heightDp = 240)
                         LoginModulesSummaryCard()
                         Text(
                             text = "Aplicación demostrativa inspirada en la comunicación institucional de Industrias Peñoles (penoles.com.mx).",
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Start
                         )
@@ -366,7 +379,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                        .padding(horizontal = hPad, vertical = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -376,8 +389,8 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .widthIn(max = 520.dp)
                     ) {
-                        LoginHeroBanner(heightDp = 190)
-                        Spacer(modifier = Modifier.height(18.dp))
+                        LoginHeroBanner(heightDp = 200)
+                        Spacer(modifier = Modifier.height(16.dp))
                         LoginFormCard(
                             uiState = uiState,
                             passwordVisible = passwordVisible,
@@ -417,7 +430,7 @@ fun LoginScreen(
 
                     Text(
                         text = "Aplicación demostrativa inspirada en la comunicación institucional de Industrias Peñoles (penoles.com.mx).",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.widthIn(max = 520.dp)
@@ -433,23 +446,24 @@ private fun LoginHeroBanner(heightDp: Int) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(heightDp.dp)
+            .heightIn(min = heightDp.dp)
             .clip(RoundedCornerShape(24.dp))
     ) {
         Image(
             painter = painterResource(id = R.drawable.img_banner_mining_innovation_1793310478889),
-            contentDescription = "Operaciones sustentables Peñoles Conecta",
-            modifier = Modifier.fillMaxSize(),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize(),
             contentScale = ContentScale.Crop
         )
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
-                            Color.Black.copy(alpha = 0.25f),
-                            Color.Black.copy(alpha = 0.85f)
+                        colorStops = arrayOf(
+                            0.0f to Color.Black.copy(alpha = 0.25f),
+                            0.45f to Color.Black.copy(alpha = 0.55f),
+                            1.0f to Color.Black.copy(alpha = 0.88f)
                         )
                     )
                 )
@@ -460,26 +474,28 @@ private fun LoginHeroBanner(heightDp: Int) {
                 .padding(20.dp)
         ) {
             Surface(
-                color = MaterialTheme.colorScheme.primary,
+                color = Color(0xFFC41E24),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
-                    text = "ACCESO ADMINISTRADOR Y CORPORATIVO",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "Acceso corporativo y administrador",
+                    style = MaterialTheme.typography.labelMedium,
                     color = Color.White,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Peñoles Conecta",
                 style = MaterialTheme.typography.headlineLarge,
-                color = Color.White
+                color = Color.White,
+                modifier = Modifier.semantics { heading() }
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Noticias corporativas, tienda, catálogo industrial y Asistente IA.",
+                text = "Noticias institucionales, tienda demostrativa, catálogo industrial y Asistente Peñoles.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.9f)
+                color = Color.White.copy(alpha = 0.92f)
             )
         }
     }
@@ -501,9 +517,10 @@ private fun LoginFormCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -517,10 +534,13 @@ private fun LoginFormCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    CorporateBrandIdentityBadge(compact = true)
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Iniciar Sesión",
+                        text = "Iniciar sesión",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.semantics { heading() }
                     )
                     Text(
                         text = "Ingresa usuario ('Matrix') y contraseña ('Matrix123')",
@@ -541,7 +561,7 @@ private fun LoginFormCard(
                 label = {
                     Text(
                         text = "Autocompletar Admin: Matrix / Matrix123",
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelLarge
                     )
                 },
                 leadingIcon = {
@@ -549,13 +569,17 @@ private fun LoginFormCard(
                         imageVector = Icons.Default.AdminPanelSettings,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 },
+                shape = RoundedCornerShape(12.dp),
                 colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                modifier = Modifier.testTag("autofill_admin_chip")
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag("autofill_admin_chip")
             )
 
             OutlinedTextField(
@@ -569,12 +593,13 @@ private fun LoginFormCard(
                         contentDescription = "Campo de usuario"
                     )
                 },
+                isError = uiState.errorMessage != null,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
                 ),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("username_input")
@@ -594,7 +619,9 @@ private fun LoginFormCard(
                 trailingIcon = {
                     IconButton(
                         onClick = onTogglePasswordVisible,
-                        modifier = Modifier.testTag("toggle_password_visibility_button")
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("toggle_password_visibility_button")
                     ) {
                         Icon(
                             imageVector = if (passwordVisible) {
@@ -615,6 +642,7 @@ private fun LoginFormCard(
                 } else {
                     PasswordVisualTransformation()
                 },
+                isError = uiState.errorMessage != null,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
@@ -623,7 +651,7 @@ private fun LoginFormCard(
                 keyboardActions = KeyboardActions(
                     onDone = { onSubmitLogin() }
                 ),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("password_input")
@@ -634,16 +662,29 @@ private fun LoginFormCard(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("login_error_card")
                 ) {
-                    Text(
-                        text = uiState.errorMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ErrorOutline,
+                            contentDescription = "Alerta de validación",
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = uiState.errorMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
             }
 
@@ -652,22 +693,22 @@ private fun LoginFormCard(
                 enabled = !isGoogleLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp)
+                    .heightIn(min = 52.dp)
                     .testTag("login_submit_button"),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Login,
-                    contentDescription = "Botón de ingreso"
+                    contentDescription = null
                 )
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Ingresar",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
 
@@ -677,13 +718,19 @@ private fun LoginFormCard(
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
             ) {
-                HorizontalDivider(modifier = Modifier.weight(1f))
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
                 Text(
                     text = "  opciones adicionales  ",
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                HorizontalDivider(modifier = Modifier.weight(1f))
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
             }
 
             OutlinedButton(
@@ -691,9 +738,9 @@ private fun LoginFormCard(
                 enabled = !isGoogleLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .heightIn(min = 48.dp)
                     .testTag("google_sign_in_button"),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(12.dp)
             ) {
                 if (isGoogleLoading) {
                     CircularProgressIndicator(
@@ -703,7 +750,7 @@ private fun LoginFormCard(
                 } else {
                     Icon(
                         imageVector = Icons.Default.AccountCircle,
-                        contentDescription = "Google Sign-In"
+                        contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -717,13 +764,13 @@ private fun LoginFormCard(
                 onClick = onBrowsePublicNewsOffline,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .heightIn(min = 48.dp)
                     .testTag("guest_news_reader_button"),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                    contentDescription = "Explorar noticias sin iniciar sesión"
+                    contentDescription = null
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -739,32 +786,34 @@ private fun LoginFormCard(
 private fun LoginModulesSummaryCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "Módulos de Peñoles Conecta",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             FeatureBulletRow(
                 icon = Icons.Default.Newspaper,
-                title = "Noticias y Eventos Corporativos",
+                title = "Noticias y Comunicados",
                 subtitle = "Actualidad en sostenibilidad, operaciones, seguridad y comunidad."
             )
             FeatureBulletRow(
                 icon = Icons.Default.Storefront,
-                title = "Tienda Promocional y Catálogo Industrial",
-                subtitle = "Artículos institucionales y fichas técnicas con solicitud de cotización."
+                title = "Tienda de Demostración y Catálogo Industrial",
+                subtitle = "Artículos promocionales demostrativos y fichas técnicas con solicitud de cotización."
             )
             FeatureBulletRow(
                 icon = Icons.Default.AutoAwesome,
-                title = "Asistente Peñoles con Gemini y RAG",
-                subtitle = "Consultas rápidas en español con fuentes verificadas."
+                title = "Asistente Peñoles",
+                subtitle = "Consultas rápidas en español con fuentes institucionales verificadas."
             )
         }
     }
@@ -782,16 +831,16 @@ private fun FeatureBulletRow(
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(20.dp)
             )
         }
         Spacer(modifier = Modifier.width(12.dp))

@@ -1,0 +1,6 @@
+{
+  "summary":  "Plan de implementación por etapas para la auditoría de código (Code Review estricto), documentación modular .md por paquete (feature/, data/, ui/theme/ y ASSET_SOURCES.md en raíz) y rediseño visual corporativo de Peñoles Conecta en Kotlin, Jetpack Compose y Material 3.",
+  "updatedAt":  "2026-10-29T23:46:23.835517164Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

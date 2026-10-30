@@ -1,0 +1,40 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+    <!-- Fondo de estudio gris neutro claro -->
+    <path
+        android:fillColor="#F4F6F9"
+        android:pathData="M0,0h240v240h-240z" />
+    <!-- Sombra de base suave -->
+    <path
+        android:fillColor="#DDE3EC"
+        android:pathData="M78,198a42,7 0,1 0,84 0a42,7 0,1 0,-84 0z" />
+    <!-- Cuerpo principal del termo de acero en grafito mate -->
+    <path
+        android:fillColor="#3A4352"
+        android:pathData="M90,74h60v110c0,7.7 -6.3,14 -14,14h-32c-7.7,0 -14,-6.3 -14,-14z" />
+    <!-- Reflejo cilíndrico lateral -->
+    <path
+        android:fillColor="#4E596C"
+        android:pathData="M98,74h12v120h-4c-4.4,0 -8,-3.6 -8,-8z" />
+    <!-- Anillo de acero inoxidable cepillado y detalle institucional -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M90,68h60v6h-60z" />
+    <path
+        android:fillColor="#C41E24"
+        android:pathData="M90,74h60v4h-60z" />
+    <!-- Cuello térmico -->
+    <path
+        android:fillColor="#64748B"
+        android:pathData="M96,56h48v12h-48z" />
+    <!-- Tapa hermética con asa superior -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M94,42c0,-4.4 3.6,-8 8,-8h36c4.4,0 8,3.6 8,8v14h-52z" />
+    <path
+        android:fillColor="#334155"
+        android:pathData="M108,28h24c3.3,0 6,2.7 6,6v2h-6v-2h-24v2h-6v-2c0,-3.3 2.7,-6 6,-6z" />
+</vector>

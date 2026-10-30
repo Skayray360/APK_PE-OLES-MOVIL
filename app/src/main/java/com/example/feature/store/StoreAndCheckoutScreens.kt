@@ -1,6 +1,7 @@
 package com.example.feature.store
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,9 +13,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,17 +30,22 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Factory
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RequestQuote
 import androidx.compose.material.icons.filled.Search
@@ -70,12 +79,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,9 +97,11 @@ import com.example.core.model.FavoriteItem
 import com.example.core.model.Product
 import com.example.feature.common.CategoryBadge
 import com.example.feature.common.CorporateTopBar
+import com.example.feature.common.DemoStoreNoticeBanner
 import com.example.feature.common.EmptyStateCard
 import com.example.feature.common.PenolesImage
 import com.example.feature.common.formatCurrencyMxn
+import com.example.ui.theme.PenolesThemeExtras
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,9 +115,9 @@ fun StoreScreen(
     onSearchClick: () -> Unit,
     onNotificationsClick: () -> Unit
 ) {
-    var selectedModalityTab by remember { mutableIntStateOf(0) } // 0 = Promocionales, 1 = Catálogo Industrial
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Todas") }
+    var selectedModalityTab by rememberSaveable { mutableIntStateOf(0) } // 0 = Promocionales, 1 = Catálogo Industrial
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedCategory by rememberSaveable { mutableStateOf("Todas") }
 
     val modalityType = if (selectedModalityTab == 0) "PROMOTIONAL" else "INDUSTRIAL"
     val availableCategories = remember(products, modalityType) {
@@ -123,7 +138,14 @@ fun StoreScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    val configuration = LocalConfiguration.current
+    val isLargeFont = configuration.fontScale >= 1.3f
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         CorporateTopBar(
             subtitle = "Tienda Promocional y Catálogo Industrial",
             cartCount = cartCount,
@@ -134,6 +156,8 @@ fun StoreScreen(
 
         SecondaryTabRow(
             selectedTabIndex = selectedModalityTab,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("store_modality_tabs")
@@ -144,15 +168,22 @@ fun StoreScreen(
                     selectedModalityTab = 0
                     selectedCategory = "Todas"
                 },
-                text = { Text("Artículos Promocionales") },
+                text = {
+                    Text(
+                        text = "Artículos Promocionales",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                },
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.ShoppingBag,
+                        imageVector = if (selectedModalityTab == 0) Icons.Default.Check else Icons.Default.ShoppingBag,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
                 },
-                modifier = Modifier.testTag("tab_promotional_store")
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag("tab_promotional_store")
             )
             Tab(
                 selected = selectedModalityTab == 1,
@@ -160,54 +191,43 @@ fun StoreScreen(
                     selectedModalityTab = 1
                     selectedCategory = "Todas"
                 },
-                text = { Text("Catálogo Industrial") },
+                text = {
+                    Text(
+                        text = "Catálogo Industrial",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                },
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.Factory,
+                        imageVector = if (selectedModalityTab == 1) Icons.Default.Check else Icons.Default.Factory,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
                 },
-                modifier = Modifier.testTag("tab_industrial_catalog")
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag("tab_industrial_catalog")
             )
         }
 
-        // Aviso de modalidad comercial
-        Surface(
-            color = if (selectedModalityTab == 0) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-            } else {
-                MaterialTheme.colorScheme.secondaryContainer
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (selectedModalityTab == 0) {
-                        "Catálogo demostrativo de artículos institucionales. Checkout en modo de demostración."
-                    } else {
-                        "Catálogo informativo de metales afinados y químicos industriales. Exclusivo para consulta técnica y solicitud de cotización."
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isNarrow = maxWidth < 360.dp
             val isTablet = maxWidth >= 600.dp
-            val hPad = if (isTablet) 24.dp else 16.dp
-            val cardMinWidth = if (isTablet) 220.dp else 165.dp
+            val isExpandedTablet = maxWidth >= 840.dp
+            val hPad = when {
+                isExpandedTablet -> 32.dp
+                isTablet -> 24.dp
+                isNarrow -> 16.dp
+                else -> 20.dp
+            }
+
+            // 1 columna en pantallas estrechas (< 360.dp) o con fuente ampliada (>= 1.3x);
+            // 2 columnas en móvil normal; adaptable en tablet.
+            val gridColumns = when {
+                isTablet -> GridCells.Adaptive(minSize = if (isLargeFont) 260.dp else 220.dp)
+                isNarrow || isLargeFont -> GridCells.Fixed(1)
+                else -> GridCells.Fixed(2)
+            }
 
             Column(modifier = Modifier.fillMaxSize()) {
                 OutlinedTextField(
@@ -215,23 +235,38 @@ fun StoreScreen(
                     onValueChange = { searchQuery = it },
                     placeholder = {
                         Text(
-                            if (selectedModalityTab == 0) "Buscar termos, gorras, libretas..."
-                            else "Buscar Plata, Zinc SHG, Sulfato de Sodio..."
+                            text = if (selectedModalityTab == 0) {
+                                "Buscar termos, gorras, libretas..."
+                            } else {
+                                "Buscar Plata, Zinc SHG, Sulfato de Sodio..."
+                            },
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Buscar productos"
+                        )
+                    },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Limpiar")
+                            IconButton(
+                                onClick = { searchQuery = "" },
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Limpiar búsqueda"
+                                )
                             }
                         }
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = hPad, vertical = 8.dp)
+                        .padding(horizontal = hPad, vertical = 12.dp)
                         .testTag("store_search_input")
                 )
 
@@ -244,88 +279,175 @@ fun StoreScreen(
                         FilterChip(
                             selected = isSelected,
                             onClick = { selectedCategory = category },
-                            label = { Text(category) },
+                            leadingIcon = if (isSelected) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Seleccionado",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            } else null,
+                            label = {
+                                Text(
+                                    text = category,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            },
+                            shape = RoundedCornerShape(12.dp),
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = Color.White
-                            )
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = MaterialTheme.colorScheme.outline,
+                                selectedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            modifier = Modifier.heightIn(min = 48.dp)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (filteredProducts.isEmpty()) {
+                if (products.isEmpty()) {
+                    EmptyStateCard(
+                        icon = Icons.Default.Inventory2,
+                        title = "Cargando catálogo institucional",
+                        subtitle = "Sincronizando artículos promocionales y fichas técnicas industriales."
+                    )
+                } else if (filteredProducts.isEmpty()) {
                     EmptyStateCard(
                         icon = Icons.Default.ShoppingBag,
-                        title = "No se encontraron productos",
-                        subtitle = "Ajusta la categoría o el término de búsqueda."
+                        title = "No se encontraron artículos",
+                        subtitle = "Ajusta la categoría seleccionada o el término de búsqueda.",
+                        actionLabel = "Restablecer filtros",
+                        onAction = {
+                            selectedCategory = "Todas"
+                            searchQuery = ""
+                        }
                     )
                 } else {
                     LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = cardMinWidth),
-                        contentPadding = PaddingValues(horizontal = hPad, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        columns = gridColumns,
+                        contentPadding = PaddingValues(
+                            start = hPad,
+                            end = hPad,
+                            top = 8.dp,
+                            bottom = 28.dp
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
                             .fillMaxSize()
                             .testTag("store_products_grid")
                     ) {
-                if (selectedModalityTab == 0) {
-                    item(span = { GridItemSpan(maxLineSpan) }) {
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Colección Institucional Conecta",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "Artículos promocionales autorizados sujetos a disponibilidad en inventario.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                OutlinedButton(
-                                    onClick = onOpenCart,
-                                    modifier = Modifier.testTag("store_open_cart_banner_button")
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            if (selectedModalityTab == 0) {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    ),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ShoppingCart,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Carrito ($cartCount)")
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        DemoStoreNoticeBanner(
+                                            secondaryText = "Precios y existencias exclusivamente demostrativos para pruebas de flujo."
+                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "Colección Institucional Peñoles Conecta",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = "Artículos promocionales con identidad individual.",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            OutlinedButton(
+                                                onClick = onOpenCart,
+                                                shape = RoundedCornerShape(12.dp),
+                                                modifier = Modifier
+                                                    .heightIn(min = 48.dp)
+                                                    .testTag("store_open_cart_banner_button")
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ShoppingCart,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = "Carrito ($cartCount)",
+                                                    style = MaterialTheme.typography.labelLarge
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Factory,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column {
+                                            Text(
+                                                text = "Catálogo Industrial Informativo · Sin venta directa",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                            Text(
+                                                text = "Consulta fichas técnicas de metales afinados y químicos industriales con canal de cotización empresarial.",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
+
+                        items(filteredProducts, key = { it.id }) { product ->
+                            val isFav = favorites.any { it.targetType == "PRODUCT" && it.targetId == product.id }
+                            StoreGridProductCard(
+                                product = product,
+                                isFavorite = isFav,
+                                onClick = { onProductClick(product) },
+                                onToggleFavorite = { onToggleFavorite(product) }
+                            )
+                        }
                     }
                 }
-
-                items(filteredProducts, key = { it.id }) { product ->
-                    val isFav = favorites.any { it.targetType == "PRODUCT" && it.targetId == product.id }
-                    StoreGridProductCard(
-                        product = product,
-                        isFavorite = isFav,
-                        onClick = { onProductClick(product) },
-                        onToggleFavorite = { onToggleFavorite(product) }
-                    )
-                }
-            }
-        }
             }
         }
     }
@@ -339,51 +461,105 @@ private fun StoreGridProductCard(
     onToggleFavorite: () -> Unit
 ) {
     val isIndustrial = product.productType == "INDUSTRIAL"
+    val isOutOfStock = !isIndustrial && product.stock <= 0
+    val semanticColors = PenolesThemeExtras.semanticColors
+
     OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
+            .semantics {
+                contentDescription = "${product.name}, categoría ${product.categoryId}"
+            }
             .testTag("store_product_card_${product.id}"),
         shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Contenedor de imagen de producto: 1:1 cuadrado con fondo neutro y ContentScale.Fit para promocionales
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(135.dp)
+                    .then(
+                        if (isIndustrial) {
+                            Modifier.height(156.dp)
+                        } else {
+                            Modifier.aspectRatio(1f)
+                        }
+                    )
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
             ) {
                 PenolesImage(
                     imageKeyOrUrl = product.imageUrl,
+                    productId = product.id,
+                    isProduct = !isIndustrial,
                     contentDescription = product.name,
-                    modifier = Modifier.fillMaxSize()
+                    contentScale = if (isIndustrial) ContentScale.Crop else ContentScale.Fit,
+                    modifier = if (isIndustrial) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    }
                 )
-                IconButton(
-                    onClick = onToggleFavorite,
-                    modifier = Modifier.align(Alignment.TopEnd)
-                ) {
-                    Icon(
-                        imageVector = if (isFavorite) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                        contentDescription = "Guardar producto",
-                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else Color.White
-                    )
-                }
+
                 CategoryBadge(
                     text = product.categoryId,
+                    isHighlighted = !isIndustrial,
                     modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(8.dp)
+                        .align(Alignment.TopStart)
+                        .padding(10.dp)
                 )
+
+                // Botón de favorito con superficie propia y área táctil mínima de 48x48 dp
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                ) {
+                    IconButton(
+                        onClick = onToggleFavorite,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                            contentDescription = if (isFavorite) {
+                                "Quitar ${product.name} de favoritos"
+                            } else {
+                                "Guardar ${product.name} en favoritos"
+                            },
+                            tint = if (isFavorite) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        )
+                    }
+                }
             }
-            Column(modifier = Modifier.padding(12.dp)) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
                 Text(
                     text = product.name,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.height(40.dp)
+                    modifier = Modifier.heightIn(min = 44.dp)
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 Text(
                     text = product.description,
                     style = MaterialTheme.typography.bodySmall,
@@ -391,17 +567,20 @@ private fun StoreGridProductCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 if (isIndustrial) {
                     Text(
                         text = "Sujeto a cotización",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.secondary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Ficha técnica verificada",
-                        style = MaterialTheme.typography.labelSmall,
+                        text = "Ficha técnica informativa",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
@@ -412,21 +591,65 @@ private fun StoreGridProductCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Disponibles: ${product.stock} pzas",
-                        style = MaterialTheme.typography.labelSmall,
+                        text = "Precio demostrativo · Sin cobro real",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isOutOfStock) Icons.Default.ErrorOutline else Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = if (isOutOfStock) MaterialTheme.colorScheme.error else semanticColors.success,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isOutOfStock) {
+                                "Agotado en demostración"
+                            } else {
+                                "Disponible (${product.stock} pzas demo)"
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isOutOfStock) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Button(
                     onClick = onClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp)
+                    enabled = !isOutOfStock,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isIndustrial) {
+                            MaterialTheme.colorScheme.secondary
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                        contentColor = if (isIndustrial) {
+                            MaterialTheme.colorScheme.onSecondary
+                        } else {
+                            MaterialTheme.colorScheme.onPrimary
+                        }
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
                 ) {
                     Text(
-                        text = if (isIndustrial) "Solicitar cotización" else "Ver detalles",
-                        style = MaterialTheme.typography.labelMedium
+                        text = when {
+                            isIndustrial -> "Solicitar cotización"
+                            isOutOfStock -> "Sin existencias"
+                            else -> "Ver detalles"
+                        },
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             }
@@ -448,6 +671,7 @@ fun ProductDetailScreen(
 ) {
     BackHandler(onBack = onBack)
     val isIndustrial = product.productType == "INDUSTRIAL"
+    val isOutOfStock = !isIndustrial && product.stock <= 0
     var selectedVariant by remember(product) {
         mutableStateOf(product.variants.firstOrNull() ?: "Estándar")
     }
@@ -459,7 +683,8 @@ fun ProductDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (isIndustrial) "Ficha Técnica Industrial" else "Detalle de Artículo",
+                        text = if (isIndustrial) "Ficha Técnica Industrial" else "Detalle de Artículo Promocional",
+                        style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -467,7 +692,9 @@ fun ProductDetailScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        modifier = Modifier.testTag("product_detail_back_button")
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("product_detail_back_button")
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -476,18 +703,24 @@ fun ProductDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onToggleFavorite) {
+                    IconButton(
+                        onClick = onToggleFavorite,
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                            contentDescription = "Favorito",
+                            contentDescription = if (isFavorite) "Quitar de favoritos" else "Guardar en favoritos",
                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     if (!isIndustrial) {
-                        IconButton(onClick = onOpenCart) {
+                        IconButton(
+                            onClick = onOpenCart,
+                            modifier = Modifier.size(48.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.ShoppingCart,
-                                contentDescription = "Abrir carrito"
+                                contentDescription = "Abrir carrito promocional"
                             )
                         }
                     }
@@ -498,6 +731,7 @@ fun ProductDetailScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding),
             contentAlignment = Alignment.TopCenter
         ) {
@@ -508,58 +742,84 @@ fun ProductDetailScreen(
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
                 item {
-                    PenolesImage(
-                        imageKeyOrUrl = product.imageUrl,
-                        contentDescription = product.name,
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(260.dp)
-                    )
+                            .height(280.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        PenolesImage(
+                            imageKeyOrUrl = product.imageUrl,
+                            productId = product.id,
+                            isProduct = !isIndustrial,
+                            contentDescription = product.name,
+                            contentScale = if (isIndustrial) ContentScale.Crop else ContentScale.Fit,
+                            modifier = if (isIndustrial) {
+                                Modifier.fillMaxSize()
+                            } else {
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp)
+                            }
+                        )
+                    }
                 }
 
                 item {
                     Column(modifier = Modifier.padding(20.dp)) {
+                        if (!isIndustrial) {
+                            DemoStoreNoticeBanner()
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CategoryBadge(text = product.categoryId)
+                            CategoryBadge(
+                                text = product.categoryId,
+                                isHighlighted = !isIndustrial
+                            )
                             Text(
                                 text = "SKU: ${product.sku}",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
+                        // Nombre completo sin truncar en la vista de detalle
                         Text(
                             text = product.name,
                             style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.onBackground
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         if (isIndustrial) {
                             Surface(
                                 color = MaterialTheme.colorScheme.secondaryContainer,
                                 shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(14.dp),
+                                    modifier = Modifier.padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Factory,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
                                         text = "Producto industrial regulado sujeto a evaluación técnica y cotización comercial. No disponible para compra directa en carrito.",
-                                        style = MaterialTheme.typography.bodySmall
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
                                 }
                             }
@@ -570,52 +830,58 @@ fun ProductDetailScreen(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Disponibilidad en almacén demostrativo: ${product.stock} unidades",
-                                style = MaterialTheme.typography.bodySmall,
+                                text = "Precio demostrativo · Disponibilidad en almacén de prueba: ${product.stock} unidades",
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         Text(
                             text = "Descripción",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = product.description,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         Text(
                             text = "Especificaciones y Ficha Técnica",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = MaterialTheme.colorScheme.surface
                             ),
-                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
                                 text = product.technicalSpecs,
                                 style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
 
                         if (product.variants.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(18.dp))
+                            Spacer(modifier = Modifier.height(20.dp))
                             Text(
-                                text = if (isIndustrial) "Presentaciones industriales" else "Variantes / Tallas disponibles",
-                                style = MaterialTheme.typography.titleMedium
+                                text = if (isIndustrial) "Presentaciones industriales" else "Variantes disponibles",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             FlowRow(
@@ -623,10 +889,32 @@ fun ProductDetailScreen(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 product.variants.forEach { variant ->
+                                    val isSelected = selectedVariant == variant
                                     FilterChip(
-                                        selected = selectedVariant == variant,
+                                        selected = isSelected,
                                         onClick = { selectedVariant = variant },
-                                        label = { Text(variant) }
+                                        leadingIcon = if (isSelected) {
+                                            {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Variante seleccionada",
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        } else null,
+                                        label = {
+                                            Text(
+                                                text = variant,
+                                                style = MaterialTheme.typography.labelLarge
+                                            )
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        ),
+                                        modifier = Modifier.heightIn(min = 48.dp)
                                     )
                                 }
                             }
@@ -639,42 +927,54 @@ fun ProductDetailScreen(
                                 onClick = { showQuoteModal = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(54.dp)
+                                    .heightIn(min = 52.dp)
                                     .testTag("request_industrial_quote_button"),
-                                shape = RoundedCornerShape(14.dp)
+                                shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(imageVector = Icons.Default.RequestQuote, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Solicitar cotización empresarial",
-                                    style = MaterialTheme.typography.titleMedium
+                                    style = MaterialTheme.typography.labelLarge
                                 )
                             }
                         } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = "Cantidad:",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconButton(
-                                        onClick = { if (quantity > 1) quantity-- }
-                                    ) {
-                                        Icon(Icons.Default.Remove, contentDescription = "Disminuir")
-                                    }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
                                     Text(
-                                        text = quantity.toString(),
-                                        style = MaterialTheme.typography.titleLarge,
-                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                        text = "Cantidad",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
-                                    IconButton(
-                                        onClick = { if (quantity < product.stock.coerceAtLeast(1)) quantity++ }
-                                    ) {
-                                        Icon(Icons.Default.Add, contentDescription = "Aumentar")
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        IconButton(
+                                            onClick = { if (quantity > 1) quantity-- },
+                                            modifier = Modifier.size(48.dp)
+                                        ) {
+                                            Icon(Icons.Default.Remove, contentDescription = "Disminuir cantidad")
+                                        }
+                                        Text(
+                                            text = quantity.toString(),
+                                            style = MaterialTheme.typography.titleLarge,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        )
+                                        IconButton(
+                                            onClick = { if (quantity < product.stock.coerceAtLeast(1)) quantity++ },
+                                            modifier = Modifier.size(48.dp)
+                                        ) {
+                                            Icon(Icons.Default.Add, contentDescription = "Aumentar cantidad")
+                                        }
                                     }
                                 }
                             }
@@ -683,17 +983,18 @@ fun ProductDetailScreen(
 
                             Button(
                                 onClick = { onAddToCart(selectedVariant, quantity) },
+                                enabled = !isOutOfStock,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(54.dp)
+                                    .heightIn(min = 52.dp)
                                     .testTag("add_to_cart_button"),
-                                shape = RoundedCornerShape(14.dp)
+                                shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Agregar al carrito • ${formatCurrencyMxn(product.price * quantity)}",
-                                    style = MaterialTheme.typography.titleMedium
+                                    text = "Agregar al carrito · ${formatCurrencyMxn(product.price * quantity)}",
+                                    style = MaterialTheme.typography.labelLarge
                                 )
                             }
                         }
@@ -744,7 +1045,10 @@ private fun IndustrialQuoteDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Text(
                     text = "Producto: $productName",
                     style = MaterialTheme.typography.labelLarge,
@@ -755,6 +1059,7 @@ private fun IndustrialQuoteDialog(
                     onValueChange = { companyName = it },
                     label = { Text("Empresa o Razón Social *") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -762,6 +1067,7 @@ private fun IndustrialQuoteDialog(
                     onValueChange = { contactEmail = it },
                     label = { Text("Correo empresarial *") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -769,6 +1075,7 @@ private fun IndustrialQuoteDialog(
                     onValueChange = { contactPhone = it },
                     label = { Text("Teléfono de contacto (mín. 7 dígitos) *") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -777,6 +1084,7 @@ private fun IndustrialQuoteDialog(
                     label = { Text("Volumen / Tonelaje estimado *") },
                     placeholder = { Text("Ej. 20 Toneladas métricas mensuales") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -784,6 +1092,7 @@ private fun IndustrialQuoteDialog(
                     onValueChange = { applicationNotes = it },
                     label = { Text("Aplicación industrial y comentarios *") },
                     minLines = 2,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -799,13 +1108,18 @@ private fun IndustrialQuoteDialog(
                         applicationNotes
                     )
                 },
-                enabled = isValid
+                enabled = isValid,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.heightIn(min = 48.dp)
             ) {
                 Text("Enviar solicitud")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 48.dp)
+            ) {
                 Text("Cancelar")
             }
         }
@@ -823,12 +1137,12 @@ fun CartAndCheckoutScreen(
 ) {
     BackHandler(onBack = onBack)
 
-    var checkoutStep by remember { mutableIntStateOf(1) } // 1: Carrito, 2: Entrega y Envío, 3: Resumen y Checkout Demo, 4: Confirmación
-    var shippingAddress by remember {
+    var checkoutStep by rememberSaveable { mutableIntStateOf(1) } // 1: Carrito, 2: Entrega y Envío, 3: Resumen y Checkout Demo, 4: Confirmación
+    var shippingAddress by rememberSaveable {
         mutableStateOf("Av. Metalúrgica 550, Col. Industrial, Torreón, Coahuila, C.P. 27000")
     }
-    var selectedShippingMethod by remember { mutableStateOf("Envío Estándar Nacional (3-5 días)") }
-    var confirmedOrderId by remember { mutableStateOf<String?>(null) }
+    var selectedShippingMethod by rememberSaveable { mutableStateOf("Envío Estándar Nacional (3-5 días)") }
+    var confirmedOrderId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val subtotal = remember(cartItems) {
         cartItems.sumOf { it.unitPriceSnapshot * it.quantity }
@@ -845,12 +1159,13 @@ fun CartAndCheckoutScreen(
             TopAppBar(
                 title = {
                     Text(
-                        when (checkoutStep) {
+                        text = when (checkoutStep) {
                             1 -> "1. Revisión del Carrito"
                             2 -> "2. Entrega y Selección de Envío"
-                            3 -> "3. Resumen y Checkout Demostrativo"
-                            else -> "Confirmación y Seguimiento"
-                        }
+                            3 -> "3. Resumen de Pedido Demostrativo"
+                            else -> "Confirmación de Pedido"
+                        },
+                        style = MaterialTheme.typography.titleMedium
                     )
                 },
                 navigationIcon = {
@@ -861,7 +1176,8 @@ fun CartAndCheckoutScreen(
                             } else {
                                 onBack()
                             }
-                        }
+                        },
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -875,7 +1191,9 @@ fun CartAndCheckoutScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .background(MaterialTheme.colorScheme.background)
+                .padding(innerPadding)
+                .imePadding(),
             contentAlignment = Alignment.TopCenter
         ) {
             Column(
@@ -883,16 +1201,9 @@ fun CartAndCheckoutScreen(
                     .fillMaxSize()
                     .widthIn(max = 880.dp)
             ) {
-                // Cintillo de modo demostración
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "MODO DEMOSTRACIÓN ACTIVO: No se procesan tarjetas bancarias ni cobros reales. Los totales son validados en Firestore.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+                    DemoStoreNoticeBanner(
+                        secondaryText = "No se solicitan tarjetas bancarias ni se ejecutan cobros reales."
                     )
                 }
 
@@ -902,32 +1213,54 @@ fun CartAndCheckoutScreen(
                             EmptyStateCard(
                                 icon = Icons.Default.ShoppingCart,
                                 title = "Tu carrito promocional está vacío",
-                                subtitle = "Explora la tienda de artículos promocionales para agregar termos, gorras o libretas."
+                                subtitle = "Explora la tienda de artículos promocionales para agregar termos, gorras, libretas, playeras o mochilas."
                             )
                         } else {
                             LazyColumn(
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxWidth(),
-                                contentPadding = PaddingValues(16.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 items(cartItems, key = { it.id }) { item ->
                                     Card(
-                                        shape = RoundedCornerShape(14.dp),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(14.dp),
+                                                .padding(16.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(64.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                PenolesImage(
+                                                    imageKeyOrUrl = "",
+                                                    productId = item.productId,
+                                                    isProduct = true,
+                                                    contentDescription = item.productName,
+                                                    contentScale = ContentScale.Fit,
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(8.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     text = item.productName,
-                                                    style = MaterialTheme.typography.titleSmall
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface
                                                 )
                                                 Text(
                                                     text = "Variante: ${item.variant}",
@@ -943,25 +1276,28 @@ fun CartAndCheckoutScreen(
                                             }
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 IconButton(
-                                                    onClick = { onUpdateQuantity(item.id, item.quantity - 1) }
+                                                    onClick = { onUpdateQuantity(item.id, item.quantity - 1) },
+                                                    modifier = Modifier.size(48.dp)
                                                 ) {
-                                                    Icon(Icons.Default.Remove, contentDescription = "Menos")
+                                                    Icon(Icons.Default.Remove, contentDescription = "Disminuir cantidad")
                                                 }
                                                 Text(
                                                     text = item.quantity.toString(),
                                                     style = MaterialTheme.typography.titleMedium
                                                 )
                                                 IconButton(
-                                                    onClick = { onUpdateQuantity(item.id, item.quantity + 1) }
+                                                    onClick = { onUpdateQuantity(item.id, item.quantity + 1) },
+                                                    modifier = Modifier.size(48.dp)
                                                 ) {
-                                                    Icon(Icons.Default.Add, contentDescription = "Más")
+                                                    Icon(Icons.Default.Add, contentDescription = "Aumentar cantidad")
                                                 }
                                                 IconButton(
-                                                    onClick = { onRemoveItem(item.id) }
+                                                    onClick = { onRemoveItem(item.id) },
+                                                    modifier = Modifier.size(48.dp)
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Default.Delete,
-                                                        contentDescription = "Eliminar",
+                                                        contentDescription = "Eliminar del carrito",
                                                         tint = MaterialTheme.colorScheme.error
                                                     )
                                                 }
@@ -986,50 +1322,69 @@ fun CartAndCheckoutScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             Text(
                                 text = "Domicilio de entrega",
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleLarge
                             )
                             OutlinedTextField(
                                 value = shippingAddress,
                                 onValueChange = { shippingAddress = it },
-                                label = { Text("Dirección completa en México") },
+                                label = { Text("Dirección de entrega demostrativa") },
                                 minLines = 2,
+                                shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Modalidad de envío",
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleLarge
                             )
                             listOf(
                                 "Envío Estándar Nacional (3-5 días)" to 120.0,
                                 "Envío Exprés Corporativo (24-48 horas)" to 220.0
                             ).forEach { (methodName, cost) ->
+                                val isSelected = selectedShippingMethod == methodName
                                 OutlinedCard(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { selectedShippingMethod = methodName }
+                                        .clickable { selectedShippingMethod = methodName },
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                                    ),
+                                    colors = CardDefaults.outlinedCardColors(
+                                        containerColor = if (isSelected) {
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                                        } else {
+                                            MaterialTheme.colorScheme.surface
+                                        }
+                                    )
                                 ) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(12.dp),
+                                            .padding(16.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
                                             RadioButton(
-                                                selected = selectedShippingMethod == methodName,
+                                                selected = isSelected,
                                                 onClick = { selectedShippingMethod = methodName }
                                             )
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Text(
                                                 text = methodName,
-                                                style = MaterialTheme.typography.bodyMedium
+                                                style = MaterialTheme.typography.bodyLarge
                                             )
                                         }
                                         Text(
@@ -1060,39 +1415,47 @@ fun CartAndCheckoutScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp, vertical = 12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Card(
                                 shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(16.dp),
+                                    modifier = Modifier.padding(20.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Text(
                                         text = "Resumen del Pedido (Modo Demostración)",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.primary
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = "Artículos: ${cartItems.sumOf { it.quantity }} pzas",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyLarge
                                     )
                                     Text(
                                         text = "Entrega en: $shippingAddress",
-                                        style = MaterialTheme.typography.bodySmall
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
                                         text = "Método de envío: $selectedShippingMethod",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-                                    Text(
-                                        text = "Pasarela de pago: Checkout Seguro Simulado (Sin cargos reales ni captura de tarjetas).",
-                                        style = MaterialTheme.typography.labelMedium,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                    Text(
+                                        text = "Tienda de demostración · Sin cobros reales ni captura de tarjetas bancarias.",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -1123,13 +1486,14 @@ fun CartAndCheckoutScreen(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Confirmado",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(72.dp)
+                                tint = PenolesThemeExtras.semanticColors.success,
+                                modifier = Modifier.size(64.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = "Pedido Demostrativo Registrado",
-                                style = MaterialTheme.typography.headlineMedium
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
@@ -1139,17 +1503,22 @@ fun CartAndCheckoutScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Este registro corresponde a una orden de demostración validada en Firestore. Puedes consultar su estado en la sección Perfil > Historial de pedidos.",
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = "Este registro corresponde a una orden de demostración sin cobro real. Puedes consultar su estado en Perfil > Historial de pedidos.",
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(
                                 onClick = onBack,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 52.dp),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("Volver a la tienda")
+                                Text(
+                                    text = "Volver a la tienda",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
                             }
                         }
                     }
@@ -1168,16 +1537,17 @@ private fun CartTotalsFooter(
     onContinue: () -> Unit
 ) {
     Surface(
-        tonalElevation = 4.dp,
-        shadowElevation = 6.dp,
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Subtotal:", style = MaterialTheme.typography.bodyMedium)
+                Text("Subtotal demostrativo:", style = MaterialTheme.typography.bodyMedium)
                 Text(formatCurrencyMxn(subtotal), style = MaterialTheme.typography.bodyMedium)
             }
             Row(
@@ -1187,13 +1557,13 @@ private fun CartTotalsFooter(
                 Text("Envío estimado:", style = MaterialTheme.typography.bodyMedium)
                 Text(formatCurrencyMxn(shipping), style = MaterialTheme.typography.bodyMedium)
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Total (Validado en Backend):",
+                    text = "Total (Demostración):",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -1209,12 +1579,18 @@ private fun CartTotalsFooter(
                 onClick = onContinue,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
+                    .heightIn(min = 52.dp)
                     .testTag("checkout_continue_button"),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text(buttonText, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = buttonText,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }

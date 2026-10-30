@@ -1,45 +1,51 @@
 package com.example.feature.common
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -47,204 +53,370 @@ import com.example.R
 import java.text.NumberFormat
 import java.util.Locale
 
-enum class WindowWidthSizeClass {
-    COMPACT,
-    MEDIUM,
-    EXPANDED
-}
-
+/**
+ * Información adaptativa de ventana y accesibilidad tipográfica:
+ * - Móvil estrecho (< 360.dp): margen 16.dp
+ * - Móvil normal (360..599.dp): margen 20.dp
+ * - Tablet compacta/media (600..839.dp): margen 24.dp
+ * - Tablet expandida (>= 840.dp): margen 32.dp
+ */
 data class AdaptiveWindowInfo(
-    val widthSizeClass: WindowWidthSizeClass,
     val maxWidth: Dp,
-    val maxHeight: Dp
-) {
-    val isTablet: Boolean
-        get() = widthSizeClass != WindowWidthSizeClass.COMPACT
-
-    val isExpandedTablet: Boolean
-        get() = widthSizeClass == WindowWidthSizeClass.EXPANDED
-
-    val horizontalPadding: Dp
-        get() = when (widthSizeClass) {
-            WindowWidthSizeClass.COMPACT -> 16.dp
-            WindowWidthSizeClass.MEDIUM -> 24.dp
-            WindowWidthSizeClass.EXPANDED -> 32.dp
-        }
-
-    val gridColumns: Int
-        get() = when (widthSizeClass) {
-            WindowWidthSizeClass.COMPACT -> 1
-            WindowWidthSizeClass.MEDIUM -> 2
-            WindowWidthSizeClass.EXPANDED -> 3
-        }
-}
+    val maxHeight: Dp,
+    val isNarrowMobile: Boolean,
+    val isTablet: Boolean,
+    val isExpandedTablet: Boolean,
+    val horizontalPadding: Dp,
+    val contentMaxWidth: Dp,
+    val gridColumns: Int,
+    val fontScale: Float,
+    val isLargeFontScale: Boolean
+)
 
 @Composable
 fun AdaptiveWindowBox(
     modifier: Modifier = Modifier,
     content: @Composable (AdaptiveWindowInfo) -> Unit
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val widthClass = when {
-            maxWidth < 600.dp -> WindowWidthSizeClass.COMPACT
-            maxWidth < 840.dp -> WindowWidthSizeClass.MEDIUM
-            else -> WindowWidthSizeClass.EXPANDED
+    val configuration = LocalConfiguration.current
+    val fontScale = configuration.fontScale
+    val isLargeFontScale = fontScale >= 1.3f
+
+    BoxWithConstraints(modifier = modifier) {
+        val width = maxWidth
+        val isNarrow = width < 360.dp
+        val isTablet = width >= 600.dp
+        val isExpanded = width >= 840.dp
+        val hPadding = when {
+            isExpanded -> 32.dp
+            isTablet -> 24.dp
+            isNarrow -> 16.dp
+            else -> 20.dp
+        }
+        val maxContent = when {
+            isExpanded -> 1200.dp
+            isTablet -> 920.dp
+            else -> width
+        }
+        val cols = when {
+            isExpanded -> if (isLargeFontScale) 2 else 3
+            isTablet -> 2
+            else -> 1
         }
         content(
             AdaptiveWindowInfo(
-                widthSizeClass = widthClass,
-                maxWidth = maxWidth,
-                maxHeight = maxHeight
+                maxWidth = width,
+                maxHeight = maxHeight,
+                isNarrowMobile = isNarrow,
+                isTablet = isTablet,
+                isExpandedTablet = isExpanded,
+                horizontalPadding = hPadding,
+                contentMaxWidth = maxContent,
+                gridColumns = cols,
+                fontScale = fontScale,
+                isLargeFontScale = isLargeFontScale
             )
         )
     }
 }
 
+/**
+ * Mapa explícito de nombres de archivo objetivo (.webp) para los 5 productos promocionales
+ * actuales de la tienda. Mientras los archivos .webp autorizados no existan en `res/drawable`,
+ * la capa de presentación resuelve cada ID a su placeholder vectorial neutro e individual.
+ */
+object PenolesStoreAssetRegistry {
+    val targetWebpByProductId: Map<String, String> = mapOf(
+        "promo_termo_acero" to "img_store_termo_penoles.webp",
+        "promo_gorra_institucional" to "img_store_gorra_penoles.webp",
+        "promo_libreta_ejecutiva" to "img_store_libreta_penoles.webp",
+        "promo_playera_polo" to "img_store_polo_penoles.webp",
+        "promo_mochila_ejecutiva" to "img_store_mochila_penoles.webp"
+    )
+
+    val placeholderResByProductId: Map<String, Int> = mapOf(
+        "promo_termo_acero" to R.drawable.ic_placeholder_store_termo,
+        "promo_gorra_institucional" to R.drawable.ic_placeholder_store_gorra,
+        "promo_libreta_ejecutiva" to R.drawable.ic_placeholder_store_libreta,
+        "promo_playera_polo" to R.drawable.ic_placeholder_store_polo,
+        "promo_mochila_ejecutiva" to R.drawable.ic_placeholder_store_mochila,
+        "ind_plata_afinada" to R.drawable.img_industrial_silver_zinc_1793310481982,
+        "ind_zinc_shg" to R.drawable.img_industrial_silver_zinc_1793310481982,
+        "ind_sulfato_sodio" to R.drawable.img_industrial_silver_zinc_1793310481982,
+        "ind_oxido_magnesio" to R.drawable.img_industrial_silver_zinc_1793310481982
+    )
+
+    val localEditorialAndIndustrialKeys: Map<String, Int> = mapOf(
+        // Claves exactas y alias históricos de banners y noticias
+        "img_banner_sustainability" to R.drawable.img_banner_sustainability_1793310480917,
+        "img_banner_sustainability_1793310480917" to R.drawable.img_banner_sustainability_1793310480917,
+        "img_banner_mining_innovation" to R.drawable.img_banner_mining_innovation_1793310478889,
+        "img_banner_mining_innovation_1793310478889" to R.drawable.img_banner_mining_innovation_1793310478889,
+        "img_industrial_silver_zinc" to R.drawable.img_industrial_silver_zinc_1793310481982,
+        "img_industrial_silver_zinc_1793310481982" to R.drawable.img_industrial_silver_zinc_1793310481982,
+        // Claves explícitas por producto (si se almacenan en imageUrl)
+        "img_store_termo_penoles" to R.drawable.ic_placeholder_store_termo,
+        "img_store_termo_penoles.webp" to R.drawable.ic_placeholder_store_termo,
+        "img_store_gorra_penoles" to R.drawable.ic_placeholder_store_gorra,
+        "img_store_gorra_penoles.webp" to R.drawable.ic_placeholder_store_gorra,
+        "img_store_libreta_penoles" to R.drawable.ic_placeholder_store_libreta,
+        "img_store_libreta_penoles.webp" to R.drawable.ic_placeholder_store_libreta,
+        "img_store_polo_penoles" to R.drawable.ic_placeholder_store_polo,
+        "img_store_polo_penoles.webp" to R.drawable.ic_placeholder_store_polo,
+        "img_store_mochila_penoles" to R.drawable.ic_placeholder_store_mochila,
+        "img_store_mochila_penoles.webp" to R.drawable.ic_placeholder_store_mochila
+    )
+}
+
+fun isValidRemoteHttpUrl(raw: String): Boolean {
+    val trimmed = raw.trim()
+    return trimmed.startsWith("https://", ignoreCase = true) ||
+        trimmed.startsWith("http://", ignoreCase = true)
+}
+
+@DrawableRes
+fun resolveProductFallbackDrawable(productId: String?, imageKeyOrUrl: String): Int {
+    val cleanId = productId?.trim().orEmpty()
+    if (cleanId.isNotEmpty()) {
+        PenolesStoreAssetRegistry.placeholderResByProductId[cleanId]?.let { return it }
+    }
+    val cleanKey = imageKeyOrUrl.trim()
+    PenolesStoreAssetRegistry.localEditorialAndIndustrialKeys[cleanKey]?.let { return it }
+    PenolesStoreAssetRegistry.placeholderResByProductId[cleanKey]?.let { return it }
+    return R.drawable.ic_placeholder_product_neutral
+}
+
+@DrawableRes
+fun resolveEditorialOrProductDrawable(
+    imageKeyOrUrl: String,
+    productId: String? = null,
+    isProduct: Boolean = false
+): Int {
+    val cleanKey = imageKeyOrUrl.trim()
+    val cleanProductId = productId?.trim().orEmpty()
+
+    // 1. Si corresponde a un producto con ID registrado y la clave es vacía o el alias legado "img_promo_store_kit"
+    if (cleanProductId.isNotEmpty() && (cleanKey.isEmpty() || cleanKey == "img_promo_store_kit" || cleanKey == "img_promo_store_kit_1793310481110")) {
+        PenolesStoreAssetRegistry.placeholderResByProductId[cleanProductId]?.let { return it }
+        return R.drawable.ic_placeholder_product_neutral
+    }
+
+    // 2. Si la clave local coincide exactamente con un alias o recurso conocido
+    PenolesStoreAssetRegistry.localEditorialAndIndustrialKeys[cleanKey]?.let { return it }
+
+    // 3. Si el productId está en el mapa explícito
+    if (cleanProductId.isNotEmpty()) {
+        PenolesStoreAssetRegistry.placeholderResByProductId[cleanProductId]?.let { return it }
+    }
+
+    // 4. Si la clave era el antiguo kit genérico ("Global Solutions"), sustituir siempre por placeholder neutro de producto
+    if (cleanKey == "img_promo_store_kit" || cleanKey == "img_promo_store_kit_1793310481110") {
+        return R.drawable.ic_placeholder_product_neutral
+    }
+
+    // 5. Placeholders separados para producto vs noticia/banner
+    return if (isProduct || cleanProductId.isNotEmpty()) {
+        R.drawable.ic_placeholder_product_neutral
+    } else {
+        R.drawable.ic_placeholder_news_editorial
+    }
+}
+
+/**
+ * Componente unificado de imagen para Peñoles Conecta.
+ * - Da prioridad a URLs HTTP/HTTPS válidas específicas mediante Coil (`AsyncImage`).
+ * - Resuelve claves locales mediante un mapa explícito (sin usar `contains("promo")` ni `contains("mining")`).
+ * - Retira por completo `img_promo_store_kit_1793310481110.jpg` ("Global Solutions").
+ * - Separa placeholders de noticias (`ic_placeholder_news_editorial`) y de productos (`ic_placeholder_product_neutral` / individuales).
+ */
 @Composable
 fun PenolesImage(
     imageKeyOrUrl: String,
-    contentDescription: String,
+    contentDescription: String?,
     modifier: Modifier = Modifier,
-    contentScale: ContentScale = ContentScale.Crop
+    contentScale: ContentScale = ContentScale.Crop,
+    productId: String? = null,
+    isProduct: Boolean = false
 ) {
-    val drawableRes = when {
-        imageKeyOrUrl.contains("sustainability", ignoreCase = true) ->
-            R.drawable.img_banner_sustainability_1793310480917
-        imageKeyOrUrl.contains("mining", ignoreCase = true) ||
-            imageKeyOrUrl.contains("innovation", ignoreCase = true) ->
-            R.drawable.img_banner_mining_innovation_1793310478889
-        imageKeyOrUrl.contains("promo", ignoreCase = true) ->
-            R.drawable.img_promo_store_kit_1793310481110
-        imageKeyOrUrl.contains("industrial", ignoreCase = true) ||
-            imageKeyOrUrl.contains("silver", ignoreCase = true) ->
-            R.drawable.img_industrial_silver_zinc_1793310481982
-        imageKeyOrUrl.startsWith("http://") || imageKeyOrUrl.startsWith("https://") -> null
-        else -> R.drawable.img_banner_mining_innovation_1793310478889
-    }
+    val isPromoProduct = isProduct || (productId != null && productId.startsWith("promo_"))
+    val fallbackRes = resolveEditorialOrProductDrawable(
+        imageKeyOrUrl = imageKeyOrUrl,
+        productId = productId,
+        isProduct = isPromoProduct
+    )
 
-    if (drawableRes != null) {
+    if (isValidRemoteHttpUrl(imageKeyOrUrl)) {
+        AsyncImage(
+            model = imageKeyOrUrl.trim(),
+            contentDescription = contentDescription,
+            modifier = modifier,
+            contentScale = contentScale,
+            placeholder = painterResource(id = fallbackRes),
+            error = painterResource(id = fallbackRes)
+        )
+    } else {
         Image(
-            painter = painterResource(id = drawableRes),
+            painter = painterResource(id = fallbackRes),
             contentDescription = contentDescription,
             modifier = modifier,
             contentScale = contentScale
         )
-    } else {
-        AsyncImage(
-            model = imageKeyOrUrl,
-            contentDescription = contentDescription,
-            modifier = modifier,
-            contentScale = contentScale,
-            placeholder = painterResource(id = R.drawable.img_banner_mining_innovation_1793310478889),
-            error = painterResource(id = R.drawable.img_banner_mining_innovation_1793310478889)
-        )
+    }
+}
+
+/**
+ * Identificación institucional textual temporal mientras no exista el archivo oficial autorizado
+ * del logotipo corporativo de Industrias Peñoles (`ic_logo_penoles_oficial`).
+ * Cumple la directriz de marca: no dibuja una "P" inventada ni crea un símbolo no verificado.
+ */
+@Composable
+fun CorporateBrandIdentityBadge(
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(
+                horizontal = if (compact) 8.dp else 10.dp,
+                vertical = if (compact) 4.dp else 6.dp
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(if (compact) 14.dp else 18.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "PEÑOLES",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 
 @Composable
 fun CorporateTopBar(
-    subtitle: String = "Industrias Peñoles • Plataforma Informativa",
+    title: String = "Peñoles Conecta",
+    subtitle: String? = null,
     cartCount: Int = 0,
     onSearchClick: () -> Unit,
     onNotificationsClick: () -> Unit,
-    onCartClick: (() -> Unit)? = null
+    onCartClick: () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 2.dp,
+        tonalElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.primary)
-                        .border(1.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = "P",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Peñoles Conecta",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onSearchClick,
-                    modifier = Modifier.testTag("topbar_search_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Buscar en Peñoles Conecta",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
+                    CorporateBrandIdentityBadge()
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.semantics { heading() }
+                        )
+                        if (!subtitle.isNullOrBlank()) {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
 
-                if (onCartClick != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = onSearchClick,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("top_bar_search_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Buscar en Peñoles Conecta",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(
+                        onClick = onNotificationsClick,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("top_bar_notifications_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Avisos y notificaciones corporativas",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     IconButton(
                         onClick = onCartClick,
-                        modifier = Modifier.testTag("topbar_cart_button")
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("top_bar_cart_button")
                     ) {
                         BadgedBox(
                             badge = {
                                 if (cartCount > 0) {
                                     Badge(
                                         containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = Color.White
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     ) {
-                                        Text(cartCount.toString())
+                                        Text(
+                                            text = cartCount.toString(),
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
                                     }
                                 }
                             }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ShoppingCart,
-                                contentDescription = "Ver carrito de artículos promocionales",
+                                contentDescription = if (cartCount > 0) {
+                                    "Carrito promocional, $cartCount artículos"
+                                } else {
+                                    "Carrito promocional vacío"
+                                },
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
                 }
-
-                IconButton(
-                    onClick = onNotificationsClick,
-                    modifier = Modifier.testTag("topbar_notifications_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Centro de notificaciones",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
             }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }
@@ -252,21 +424,77 @@ fun CorporateTopBar(
 @Composable
 fun CategoryBadge(
     text: String,
-    isHighlighted: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isHighlighted: Boolean = true
 ) {
     Surface(
-        color = if (isHighlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(6.dp),
-        modifier = modifier
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = if (isHighlighted) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isHighlighted) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            }
+        )
     ) {
         Text(
-            text = text.uppercase(Locale.forLanguageTag("es-MX")),
-            style = MaterialTheme.typography.labelSmall,
-            color = if (isHighlighted) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (isHighlighted) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
         )
+    }
+}
+
+@Composable
+fun DemoStoreNoticeBanner(
+    modifier: Modifier = Modifier,
+    secondaryText: String? = null
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "Aviso de tienda de demostración",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "Tienda de demostración · Sin cobros reales",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (!secondaryText.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = secondaryText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -274,40 +502,35 @@ fun CategoryBadge(
 fun SectionHeaderRow(
     title: String,
     actionText: String? = null,
-    onActionClick: (() -> Unit)? = null
+    onActionClick: (() -> Unit)? = null,
+    horizontalPadding: Dp = 20.dp
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = horizontalPadding, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .weight(1f)
+                .semantics { heading() }
+        )
         if (actionText != null && onActionClick != null) {
-            Text(
-                text = actionText,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onActionClick() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
+            TextButton(
+                onClick = onActionClick,
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text(
+                    text = actionText,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
@@ -317,46 +540,61 @@ fun EmptyStateCard(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    modifier: Modifier = Modifier
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
 ) {
-    Column(
-        modifier = modifier
+    Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(20.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(30.dp)
+                modifier = Modifier.size(40.dp)
             )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (actionLabel != null && onAction != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                TextButton(
+                    onClick = onAction,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(
+                        text = actionLabel,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(14.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
     }
 }
 
 fun formatCurrencyMxn(amount: Double): String {
-    val formatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-MX"))
-    return "${formatter.format(amount)} MXN"
+    val format = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
+    return "${format.format(amount)} MXN"
 }

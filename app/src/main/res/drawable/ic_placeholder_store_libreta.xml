@@ -1,0 +1,34 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+    <!-- Fondo de estudio gris neutro claro -->
+    <path
+        android:fillColor="#F4F6F9"
+        android:pathData="M0,0h240v240h-240z" />
+    <!-- Sombra suave -->
+    <path
+        android:fillColor="#DDE3EC"
+        android:pathData="M62,196a58,8 0,1 0,116 0a58,8 0,1 0,-116 0z" />
+    <!-- Canto de hojas color marfil -->
+    <path
+        android:fillColor="#FAF8F5"
+        android:pathData="M74,46h96c6.6,0 12,5.4 12,12v124c0,6.6 -5.4,12 -12,12h-96z" />
+    <!-- Cubierta pasta dura gris antracita -->
+    <path
+        android:fillColor="#2B3340"
+        android:pathData="M68,42h94c6.6,0 12,5.4 12,12v126c0,6.6 -5.4,12 -12,12h-94c-3.3,0 -6,-2.7 -6,-6v-138c0,-3.3 2.7,-6 6,-6z" />
+    <!-- Lomo reforzado -->
+    <path
+        android:fillColor="#1E242E"
+        android:pathData="M68,42h14v150h-14c-3.3,0 -6,-2.7 -6,-6v-138c0,-3.3 2.7,-6 6,-6z" />
+    <!-- Cierre elástico vertical -->
+    <path
+        android:fillColor="#C41E24"
+        android:pathData="M148,42h8v150h-8z" />
+    <!-- Listón separador inferior -->
+    <path
+        android:fillColor="#991B1B"
+        android:pathData="M108,192h10v16l-5,-4l-5,4z" />
+</vector>

@@ -8,93 +8,136 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.R
 
-val MontserratFontFamily = FontFamily(
-    Font(R.font.montserrat, FontWeight.Normal),
-    Font(R.font.montserrat, FontWeight.Medium),
-    Font(R.font.montserrat, FontWeight.SemiBold),
-    Font(R.font.montserrat, FontWeight.Bold)
+/**
+ * Sistema tipográfico de Peñoles Conecta:
+ * - Títulos y encabezados: Montserrat (pesos 600 SemiBold y 700 Bold).
+ * - Lectura, navegación, botones y formularios: Plus Jakarta Sans (pesos 400 Regular, 500 Medium y 600 SemiBold).
+ *
+ * NOTA TÉCNICA DE AUDITORÍA DE FUENTES (Ver ASSET_SOURCES.md):
+ * 1. `res/font/montserrat.ttf` fue inspeccionado mediante sus tablas OpenType (`name` y `OS/2`):
+ *    es un archivo estático (sin tabla variable `fvar`) cuyo nombre interno es "Montserrat Thin Regular".
+ *    Por ello NO se duplica como falso peso Normal/Medium/SemiBold/Bold. Mientras se incorporan los
+ *    archivos estáticos `montserrat_semibold.ttf` (600) y `montserrat_bold.ttf` (700) —o una fuente
+ *    variable auténtica con eje `wght`—, `MontserratDisplayFamily` utiliza temporalmente
+ *    `FontFamily.SansSerif` del sistema para garantizar pesos 600 y 700 reales y legibles.
+ * 2. `res/font/plus_jakarta_sans.ttf` es un archivo estático (`has_fvar = false`) correspondiente a
+ *    "Plus Jakarta Sans Regular" (`usWeightClass = 400`). Se registra únicamente para `FontWeight.Normal`
+ *    sin falsificar los pesos 500 y 600 con el mismo binario estático.
+ */
+val MontserratFamily: FontFamily = FontFamily.SansSerif
+
+val PlusJakartaSansRegularFamily: FontFamily = FontFamily(
+    Font(R.font.plus_jakarta_sans, FontWeight.Normal)
 )
 
-val PlusJakartaFontFamily = FontFamily(
-    Font(R.font.plus_jakarta_sans, FontWeight.Normal),
-    Font(R.font.plus_jakarta_sans, FontWeight.Medium),
-    Font(R.font.plus_jakarta_sans, FontWeight.SemiBold),
-    Font(R.font.plus_jakarta_sans, FontWeight.Bold)
-)
+/**
+ * Para estilos 500 (Medium) y 600 (SemiBold) de Plus Jakarta Sans, mientras no existan los archivos
+ * `plus_jakarta_sans_medium.ttf` y `plus_jakarta_sans_semibold.ttf` en `res/font/`, se utiliza
+ * `FontFamily.SansSerif` para preservar la diferenciación real de peso tipográfico sin inventar
+ * pesos sobre el archivo estático 400.
+ */
+val PlusJakartaSansWeightedFamily: FontFamily = FontFamily.SansSerif
 
 val Typography = Typography(
+    // Escala superior armonizada para que ningún componente caiga en otra familia por accidente
     displayLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
+        fontFamily = MontserratFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 34.sp,
-        lineHeight = 40.sp,
-        letterSpacing = (-0.5).sp
+        fontSize = 32.sp,
+        lineHeight = 38.sp
     ),
+    displayMedium = TextStyle(
+        fontFamily = MontserratFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp,
+        lineHeight = 36.sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily = MontserratFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 34.sp
+    ),
+    // Título principal: Montserrat 700, 28/34 sp
     headlineLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
+        fontFamily = MontserratFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        lineHeight = 32.sp,
-        letterSpacing = (-0.25).sp
+        fontSize = 28.sp,
+        lineHeight = 34.sp
     ),
+    // Encabezado: Montserrat 600, 24/30 sp
     headlineMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Bold,
+        fontFamily = MontserratFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp,
+        lineHeight = 30.sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = MontserratFamily,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 22.sp,
         lineHeight = 28.sp
     ),
+    // Sección: Montserrat 600, 20/26 sp
     titleLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp
+        fontFamily = MontserratFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp,
+        lineHeight = 26.sp
     ),
+    // Tarjeta: Plus Jakarta Sans 600, 16/22 sp
     titleMedium = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansWeightedFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
         lineHeight = 22.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansWeightedFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp
     ),
+    // Lectura: Plus Jakarta Sans 400, 16/24 sp
     bodyLarge = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansRegularFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp
     ),
+    // Información secundaria: Plus Jakarta Sans 400, 14/20 sp
     bodyMedium = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansRegularFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp
     ),
+    // Etiquetas / texto secundario compacto: Plus Jakarta Sans 400, 12/16 sp (nunca < 12.sp)
     bodySmall = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansRegularFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp
     ),
+    // Botones: Plus Jakarta Sans 600, 14/20 sp
     labelLarge = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansWeightedFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp
     ),
+    // Etiquetas: Plus Jakarta Sans 500, 12/16 sp
     labelMedium = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansWeightedFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp
     ),
+    // Mínimo funcional estricto de 12/16 sp para evitar textos ilegibles de 10-11 sp
     labelSmall = TextStyle(
-        fontFamily = PlusJakartaFontFamily,
+        fontFamily = PlusJakartaSansWeightedFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 14.sp
+        fontSize = 12.sp,
+        lineHeight = 16.sp
     )
 )

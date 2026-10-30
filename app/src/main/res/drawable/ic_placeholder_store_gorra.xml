@@ -1,0 +1,40 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+    <!-- Fondo de estudio gris neutro claro -->
+    <path
+        android:fillColor="#F4F6F9"
+        android:pathData="M0,0h240v240h-240z" />
+    <!-- Sombra suave inferior -->
+    <path
+        android:fillColor="#DDE3EC"
+        android:pathData="M46,172a74,10 0,1 0,148 0a74,10 0,1 0,-148 0z" />
+    <!-- Copa estructurada de 6 paneles en tono carbón -->
+    <path
+        android:fillColor="#2D3542"
+        android:pathData="M56,144c0,-38 26,-68 62,-68c36,0 62,30 62,68z" />
+    <!-- Panel frontal iluminado -->
+    <path
+        android:fillColor="#3B4556"
+        android:pathData="M86,144c2,-34 15,-64 32,-68c17,4 30,34 32,68z" />
+    <!-- Costuras superiores y botón de corona -->
+    <path
+        android:fillColor="#1E242E"
+        android:pathData="M114,72h8v6h-8z" />
+    <!-- Ojales de ventilación -->
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M94,98a3,3 0,1 0,6 0a3,3 0,1 0,-6 0z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M136,98a3,3 0,1 0,6 0a3,3 0,1 0,-6 0z" />
+    <!-- Visera curva frontal con pespunte discreto -->
+    <path
+        android:fillColor="#1E242E"
+        android:pathData="M48,144h136c8,0 14,6 10,12c-10,12 -46,18 -86,16c-34,-2 -58,-10 -66,-20c-2,-4 1,-8 6,-8z" />
+    <path
+        android:fillColor="#C41E24"
+        android:pathData="M56,142h124v3h-124z" />
+</vector>

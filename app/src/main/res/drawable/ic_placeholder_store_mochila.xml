@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+    <!-- Fondo de estudio gris neutro claro -->
+    <path
+        android:fillColor="#F4F6F9"
+        android:pathData="M0,0h240v240h-240z" />
+    <!-- Sombra de base -->
+    <path
+        android:fillColor="#DDE3EC"
+        android:pathData="M58,198a62,8 0,1 0,124 0a62,8 0,1 0,-124 0z" />
+    <!-- Asa superior ergonómica -->
+    <path
+        android:fillColor="#1E2530"
+        android:pathData="M102,36h36c5.5,0 10,4.5 10,10v10h-8v-8c0,-2.2 -1.8,-4 -4,-4h-32c-2.2,0 -4,1.8 -4,4v8h-8v-10c0,-5.5 4.5,-10 10,-10z" />
+    <!-- Cuerpo principal de la mochila porta laptop -->
+    <path
+        android:fillColor="#2B3340"
+        android:pathData="M72,52h96c11,0 20,9 20,20v104c0,8.8 -7.2,16 -16,16h-104c-8.8,0 -16,-7.2 -16,-16v-104c0,-11 9,-20 20,-20z" />
+    <!-- Compartimento organizador frontal -->
+    <path
+        android:fillColor="#384354"
+        android:pathData="M78,108h84c5.5,0 10,4.5 10,10v54c0,5.5 -4.5,10 -10,10h-84c-5.5,0 -10,-4.5 -10,-10v-54c0,-5.5 4.5,-10 10,-10z" />
+    <!-- Cierre cremallera superior y detalle reflectante -->
+    <path
+        android:fillColor="#64748B"
+        android:pathData="M74,80h92v4h-92z" />
+    <path
+        android:fillColor="#C41E24"
+        android:pathData="M96,124h48v4h-48z" />
+</vector>

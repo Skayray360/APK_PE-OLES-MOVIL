@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+    <!-- Fondo neutro para producto promocional sin imagen asignada -->
+    <path
+        android:fillColor="#F4F6F9"
+        android:pathData="M0,0h240v240h-240z" />
+    <path
+        android:fillColor="#DDE3EC"
+        android:pathData="M64,192a56,8 0,1 0,112 0a56,8 0,1 0,-112 0z" />
+    <!-- Bolsa/empaque institucional limpio sin marca -->
+    <path
+        android:fillColor="#3A4352"
+        android:pathData="M72,78h96l8,106c0,5.5 -4.5,10 -10,10h-92c-5.5,0 -10,-4.5 -10,-10z" />
+    <path
+        android:fillColor="#4E596C"
+        android:pathData="M72,78h96v14h-96z" />
+    <!-- Asas superiores -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M96,56h48c4.4,0 8,3.6 8,8v14h-8v-12h-48v12h-8v-14c0,-4.4 3.6,-8 8,-8z" />
+    <path
+        android:fillColor="#C41E24"
+        android:pathData="M72,92h96v4h-96z" />
+</vector>

@@ -359,11 +359,11 @@ private fun AuthenticatedPenolesApp(
                                         contentDescription = tab.label
                                     )
                                 },
-                                label = { Text(tab.label) },
+                                label = { Text(tab.label, style = MaterialTheme.typography.labelMedium) },
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color.White,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                     selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    indicatorColor = MaterialTheme.colorScheme.primary,
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
@@ -385,27 +385,14 @@ private fun AuthenticatedPenolesApp(
                         header = {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(top = 12.dp, bottom = 16.dp)
+                                modifier = Modifier.padding(top = 12.dp, bottom = 16.dp, start = 8.dp, end = 8.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(MaterialTheme.colorScheme.primary),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "P",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                                com.example.feature.common.CorporateBrandIdentityBadge(compact = true)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "Conecta",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -434,11 +421,11 @@ private fun AuthenticatedPenolesApp(
                                         contentDescription = tab.label
                                     )
                                 },
-                                label = { Text(tab.label) },
+                                label = { Text(tab.label, style = MaterialTheme.typography.labelMedium) },
                                 colors = NavigationRailItemDefaults.colors(
-                                    selectedIconColor = Color.White,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                     selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    indicatorColor = MaterialTheme.colorScheme.primary,
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
@@ -448,7 +435,7 @@ private fun AuthenticatedPenolesApp(
                             )
                         }
                     }
-                    VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
 
                 Box(

@@ -1,0 +1,160 @@
+Trabaja SOBRE el proyecto Android existente «Peñoles Conecta». No crees otra aplicación ni lo conviertas en una web.
+
+OBJETIVO
+Mejorar su identidad visual, legibilidad y tienda promocional manteniendo los flujos actuales. El resultado debe sentirse corporativo, industrial y contemporáneo, no una plantilla genérica ni una tienda de lujo. Implementa cambios incrementales y verificables.
+
+CONTEXTO DEL PROYECTO
+Es una app nativa Kotlin + Jetpack Compose + Material 3, con Firebase, Room y DataStore. Antes de editar, confirma estos archivos y sus llamadas:
+app/src/main/java/com/example/ui/theme/Color.kt
+app/src/main/java/com/example/ui/theme/Theme.kt
+app/src/main/java/com/example/ui/theme/Type.kt
+app/src/main/java/com/example/feature/common/PenolesCommonComponents.kt
+app/src/main/java/com/example/feature/home/HomeScreen.kt
+app/src/main/java/com/example/feature/store/StoreAndCheckoutScreens.kt
+app/src/main/java/com/example/feature/news/NewsAndSearchScreens.kt
+app/src/main/java/com/example/feature/assistant/AssistantAndProfileScreens.kt
+app/src/main/java/com/example/feature/auth/AuthScreen.kt
+app/src/main/java/com/example/MainActivity.kt
+
+Conserva package, applicationId, versiones de dependencias, navegación, firmas públicas, estado, testTags, autenticación, contratos de repositorios y reglas de negocio. No cambies esquemas Firestore ni migres Room para un rediseño. No cambies modelos de IA, credenciales, reglas Firestore o App Check. No relajes seguridad para hacer funcionar una pantalla. No registres tokens ni datos personales en logs.
+
+REFERENCIA DE MARCA
+Usa https://www.penoles.com.mx/ como referencia de identidad y fotografía. Los hexadecimales siguientes son una propuesta para la interfaz, NO una declaración de colores oficiales de un manual corporativo. Usa únicamente un logotipo verificado y autorizado; si no está disponible, informa el faltante y utiliza una identificación textual temporal. No inventes otro símbolo.
+
+1. PALETA Y ROLES
+Conserva #ED3237 como acento visual ya presente en el proyecto; no recolorees el archivo original del logo. Para controles de texto blanco usa un rojo más oscuro. No uses blanco sobre #ED3237 para texto pequeño: el contraste de colores sólidos es aproximadamente 4.11:1. Blanco sobre #C41E24 alcanza aproximadamente 5.90:1.
+
+Modo claro:
+primary = #C41E24
+onPrimary = #FFFFFF
+primaryContainer = #FFE8E9
+onPrimaryContainer = #7A1118
+secondary = #475569
+onSecondary = #FFFFFF
+secondaryContainer = #E8EDF3
+onSecondaryContainer = #17212F
+background = #F5F6F8
+onBackground = #171A21
+surface = #FFFFFF
+onSurface = #171A21
+surfaceVariant = #EEF1F5
+onSurfaceVariant = #5E6774
+outline = #748093
+outlineVariant = #D7DEE7
+error = #B3261E
+onError = #FFFFFF
+errorContainer = #F9DEDC
+onErrorContainer = #410E0B
+
+Modo oscuro:
+primary = #FFB3B5
+onPrimary = #3B080C
+primaryContainer = #5D1114
+onPrimaryContainer = #FFDAD8
+secondary = #BEC8D6
+onSecondary = #1B2635
+secondaryContainer = #303C4C
+onSecondaryContainer = #E0E8F3
+background = #0E1117
+onBackground = #F3F5F7
+surface = #151922
+onSurface = #F3F5F7
+surfaceVariant = #202633
+onSurfaceVariant = #AAB2C0
+outline = #7D899D
+outlineVariant = #30394A
+error = #FFB4AB
+onError = #690005
+errorContainer = #93000A
+onErrorContainer = #FFDAD6
+
+Acentos semánticos, claros / oscuros:
+éxito = #146C43 / #6DD69B
+advertencia = #8A5300 / #F2C166
+información = #1F5D99 / #A9C7FF
+
+Los acentos semánticos son colores de icono/texto sobre superficies, no fondos de botones con texto blanco automáticamente. Define y verifica sus pares de contenido y fondo cuando se necesiten contenedores.
+
+Centraliza colores en Color.kt y esquemas en Theme.kt. Consume MaterialTheme.colorScheme, typography y shapes; crea tokens adicionales solo para roles que Material 3 no cubra. Define los roles surfaceContainer* que soporte la versión instalada y evita que sobrevivan tintes predeterminados ajenos a la paleta. No actualices dependencias para obtener nuevos roles. Mantén color dinámico desactivado para conservar esta identidad. Define estados seleccionados, foco, pulsado, deshabilitado y carga. outlineVariant es decorativo: no usarlo como única señal para identificar un control.
+
+Como criterio de composición, prioriza superficies neutras y reserva el rojo para acciones y selección; no pintes toda la interfaz de rojo. No conviertas todo el modo oscuro en superficies rojas.
+
+2. TIPOGRAFÍA
+Mantén Montserrat para títulos y Plus Jakarta Sans para lectura, navegación, botones y formularios. Son una elección para esta interfaz, no una atribución de tipografía oficial corporativa.
+
+Escala propuesta, tamaño/interlínea en sp:
+headlineLarge: Montserrat 700, 28/34.
+headlineMedium: Montserrat 600, 24/30.
+titleLarge: Montserrat 600, 20/26.
+titleMedium: Plus Jakarta Sans 600, 16/22.
+bodyLarge: Plus Jakarta Sans 400, 16/24.
+bodyMedium: Plus Jakarta Sans 400, 14/20.
+labelLarge: Plus Jakarta Sans 600, 14/20.
+bodySmall y labelMedium: Plus Jakarta Sans 400–500, 12/16.
+
+Ajusta los otros estilos usados para que ningún componente caiga accidentalmente en una familia diferente. Evita mayúsculas sostenidas y texto funcional menor de 12 sp. No reduzcas el texto para forzarlo a entrar.
+
+CORRECCIÓN CONCRETA: Type.kt registra actualmente un mismo archivo por familia como Normal, Medium, SemiBold y Bold. Los archivos del ZIP inspeccionado son estáticos, sin eje variable fvar. Verifica sus metadatos y registra pesos reales con archivos correctos, o una fuente variable auténtica con sus ejes configurados y compatibilidad comprobada. No inventes variaciones duplicando la misma fuente estática. El archivo montserrat.ttf tiene además un nombre de familia interno «Montserrat Thin»: comprobar que corresponda al peso deseado.
+
+No referencies R.font de archivos inexistentes. Si faltan recursos de fuentes adecuados, conserva compilación con FontFamily.SansSerif temporalmente e informa el faltante. Conserva avisos/licencias necesarios al integrar recursos. Respeta el tamaño de letra del sistema.
+
+3. GEOMETRÍA, COMPONENTES Y NAVEGACIÓN
+Usa una escala de espacios de 4, 8, 12, 16, 24 y 32 dp. Margen horizontal de 20 dp en móvil normal; permite 16 dp en pantallas estrechas y 24–32 dp en tablet. Tarjetas con radio de 16 dp, campos/botones de 12 dp y banner de 24 dp. Usa elevaciones discretas, no sombras pesadas ni efectos de cristal.
+
+Área táctil mínima de 48 x 48 dp. Botones principales con altura mínima de 52 dp, ampliable cuando crezca el texto. Iconos coherentes de una sola familia Material, utilizando los recursos/dependencias existentes. Nunca emojis como iconos de navegación.
+
+Conserva destinos y callbacks actuales. Identifica la pestaña activa con icono, etiqueta e indicador, no solamente color. Respeta Scaffold padding, barras del sistema y teclado; el carrito y el campo del chat no deben quedar tapados. Conserva estado de búsqueda, filtros y desplazamiento.
+
+4. LOGO E IDENTIDAD
+CorporateTopBar muestra actualmente una «P» tipográfica: no debe presentarse como el logotipo oficial. Sustitúyela por un recurso corporativo autorizado cuando esté disponible, preservando proporción y área libre. No redibujes el logo con texto, no lo distorsiones, no le añadas volumen, sombras ni nuevos símbolos.
+
+El recurso img_launcher_icon_1793310478285.jpg contiene una ilustración mineral, no el mismo símbolo del logo corporativo de referencia. No lo presentes como logo oficial. Para launcher usa foreground/background adaptativos y un símbolo autorizado legible a tamaño pequeño, sin el nombre completo incrustado. Conserva los iconos existentes mientras no exista un reemplazo válido.
+
+En modo oscuro utiliza una variante autorizada para fondo oscuro o una superficie clara de respaldo; no inventes una versión monocroma. Convierte SVG compatibles a VectorDrawable; para diseños no convertibles usa PNG transparente adecuado, sin asumir que un SVG crudo funciona con painterResource.
+
+5. FOTOGRAFÍA Y ASSETS
+Inicio/noticias: prioriza fotografía institucional autorizada de instalaciones, innovación y sostenibilidad. No presentes una imagen conceptual como fotografía real de una instalación. Registra procedencia y permiso pendiente en ASSET_SOURCES.md; que una imagen sea pública no significa que esté autorizada para redistribución.
+
+Banners: relación 16:9, objetivo 1600 x 900 px, WebP; presupuesto orientativo 200–450 KB. Usa Crop revisando el punto de interés y sin cortar rostros o el elemento principal. Mantén los textos como componentes Compose, nunca dentro de una imagen. Para texto sobre foto usa un degradado oscuro localizado y verifica contraste en la imagen real, no solo en la paleta.
+
+Productos: imágenes individuales cuadradas de 1080 x 1080 px, fondo blanco/gris neutro, mismo encuadre e iluminación, objeto completo con margen y sombra suave. Usa Fit y espacio interior; no recortes producto ni logotipo. WebP con objetivo orientativo 100–250 KB sin deteriorar marca ni bordes. No fuerces estos pesos si la calidad deja de ser adecuada.
+
+No uses marcas ajenas, marcas de agua, textos falsos, escudos inventados ni certificaciones simuladas. Para un mockup conceptual genera primero el objeto sin marca y compón después el archivo autorizado del logo; no pidas al generador que improvise sus letras. Identifica los mockups como conceptuales, no como inventario real.
+
+Carga assets locales desde recursos Android y reutiliza Coil para las imágenes remotas. Para nuevos recursos remotos usa HTTPS; no cambies endpoints o política global de red como parte de este rediseño. Define placeholders de producto y de noticia separados y neutrales. Una foto de una mina no debe funcionar como sustituto de un producto sin imagen.
+
+6. CORREGIR LA TIENDA EXISTENTE
+El recurso img_promo_store_kit_1793310481110.jpg muestra artículos con la marca «Global Solutions». Retíralo de la presentación Peñoles y conserva un placeholder neutro mientras falten imágenes autorizadas. No lo reutilices en cada artículo.
+
+Respeta estos IDs existentes y asocia imágenes individuales mediante un mapa explícito en la capa de presentación:
+promo_termo_acero -> img_store_termo_penoles.webp
+promo_gorra_institucional -> img_store_gorra_penoles.webp
+promo_libreta_ejecutiva -> img_store_libreta_penoles.webp
+promo_playera_polo -> img_store_polo_penoles.webp
+promo_mochila_ejecutiva -> img_store_mochila_penoles.webp
+
+Los nombres son recursos objetivo: solo referéncialos cuando existan. No alteres IDs, SKU, relaciones del carrito o contratos Firestore. No necesitas migrar la base de datos para resolver imágenes por ID.
+
+PenolesImage actualmente decide imágenes con contains("promo"), contains("mining"), etc.; esas condiciones incluso pueden sustituir URLs por imágenes locales. Cambia a resolución explícita y compatible: distinguir URL válida de clave local, mantener claves antiguas mediante alias exactos y usar el ID del producto donde sea necesario. No sustituir cualquier cadena que contenga «promo» por el kit genérico. Una URL válida específica de producto debe mantener prioridad sobre el fallback local. Evita romper llamadas existentes: añade parámetros opcionales o un wrapper de presentación si hace falta.
+
+Diseña una cuadrícula de dos columnas cuando el ancho y tamaño de fuente permitan lectura completa; usa una columna en pantallas muy estrechas o con fuente ampliada y más columnas en tablet. Cada tarjeta debe tener imagen propia, nombre legible, categoría, precio existente claramente de demostración, favorito y acción accesible. Nombres largos con resumen máximo de dos líneas y nombre completo en detalle/accesibilidad.
+
+Mantén filtros, búsqueda, variantes, carrito y flujos de pedido demostrativo. Distingue agotado, seleccionado, carga, error y vacío. El catálogo industrial debe permanecer separado e informativo; no añadas compra de materiales industriales. Conserva un aviso visible «Tienda de demostración · Sin cobros reales». No inventes precios reales, existencias, certificaciones, reseñas, descuentos o garantías. No añadas campos de tarjeta ni pagos reales.
+
+7. APLICACIÓN A LAS PANTALLAS
+Inicio: cabecera contenida, banner principal, accesos existentes, noticias y productos destacados. Evita repetir bloques y carruseles automáticos que distraigan.
+Noticias: imagen coherente, fecha/fuente cuando existan, título claro y lectura con bodyLarge. No inventar actualidad ni fechas.
+Tienda: imagen de producto protagonista y estructura de tarjetas consistente, sin promociones falsas.
+Asistente: conversación legible, entrada visible con teclado, estados honestos de enviando/error y fuentes solo cuando existan. No fabriques respuestas ni cambies la integración para una mejora visual.
+Perfil y acceso: formularios alineados, validaciones legibles y agrupación clara. Conserva autenticación y funciones existentes; no elimines botones Google ni modifiques su marca.
+
+8. VALIDACIÓN Y ENTREGA
+Trabaja por etapas: primero tema/tipografía; después componentes compartidos; después Inicio/Tienda; finalmente demás pantallas. Comprueba compilación y comportamiento tras cada etapa. No hagas una reescritura masiva de MainActivity.
+
+Prueba modo claro y oscuro, anchos de 320/360/412 dp y tablet, orientación y fuente del sistema al 200 %. Verifica TalkBack, nombres accesibles de botones, orden de foco, selección, teclado y ausencia de controles solapados. Usa descripción nula para imágenes puramente decorativas y descripciones útiles para las informativas.
+
+Verifica contraste mínimo de 4.5:1 para texto normal y 3:1 para texto grande; no asumas que una paleta válida garantiza todas las combinaciones de la pantalla. Comprueba controles, foco y estados por separado. No comuniques errores o selección solo con color.
+
+Ejecuta las tareas de build, lint y tests disponibles en el entorno; comprueba primero qué herramientas existen. El ZIP inspeccionado no incluye los scripts gradlew/gradlew.bat ni gradle-wrapper.jar: no afirmes haber ejecutado ./gradlew si falta. Utiliza el Gradle del entorno o documenta el bloqueo sin actualizar versiones innecesariamente. Las vistas previas deben usar datos locales y no requerir sesión ni hacer llamadas reales.
+
+Entrega cambios reales, lista de archivos modificados, recursos faltantes, pruebas ejecutadas con resultado y capturas de pantallas solo cuando hayan sido realmente renderizadas. No declares que compila, que no hay regresiones o que está listo para producción sin evidencia. Si un asset o servicio no está disponible, mantén un fallback funcional y explica exactamente qué quedó pendiente.

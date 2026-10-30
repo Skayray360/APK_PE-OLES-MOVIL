@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <!-- Fondo editorial neutro separado de la tienda -->
+    <path
+        android:fillColor="#E8EDF3"
+        android:pathData="M0,0h320v180h-320z" />
+    <!-- Retícula editorial discreta -->
+    <path
+        android:fillColor="#D7DEE7"
+        android:pathData="M32,28h256v124h-256z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,40h96v100h-96z" />
+    <path
+        android:fillColor="#C41E24"
+        android:pathData="M44,40h96v8h-96z" />
+    <path
+        android:fillColor="#64748B"
+        android:pathData="M156,48h112v12h-112z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M156,72h96v8h-96z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M156,90h108v8h-108z" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M156,108h80v8h-80z" />
+</vector>
